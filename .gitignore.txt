@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment files
+.env
+*.env
+
+# MacOS
+.DS_Store
+
+# Jupyter Notebooks (if any)
+.ipynb_checkpoints/
+
+# Virtual environment folders (optional)
+venv/
+env/
+.venv/
+
+# Streamlit
+.streamlit/config.toml
+
+# Logs
+*.log
+
+# PDF or data output files
+*.pdf
+
+# VSCode/IDE files
+.vscode/
+.idea/
+
+# RTF and unnecessary system files
+*.rtf
