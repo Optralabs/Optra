@@ -9,11 +9,85 @@ import pdfplumber
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
+# ----------------------------
+# Load and embed OPTRA logo
+# ----------------------------
+from PIL import Image
+import base64
+from io import BytesIO
+import streamlit as st
+
+def get_logo_base64(path, width=80):
+    img = Image.open(path)
+    img = img.resize((width, width), Image.Resampling.LANCZOS)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+# Set your logo path
+logo_base64 = get_logo_base64("optra_logo_transparent.png")
+
+# Display logo and brand (only once)
+st.markdown(
+    f"""
+    <div style='display: flex; align-items: center; margin-bottom: 2rem;'>
+        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
+        <div>
+            <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
+# Set page config
+
+# ----------------------------
+# 🧩 OPTRA Sidebar Setup
+# ----------------------------
+st.markdown("""
+    <style>
+        /* Force sidebar background to black */
+        section[data-testid="stSidebar"] {
+            background-color: #000000 !important;
+        }
+        /* Sidebar text color */
+        section[data-testid="stSidebar"] .css-1v0mbdj, 
+        section[data-testid="stSidebar"] .css-1wvsk6o {
+            color: #ffffff !important;
+        }
+        /* Optional spacing and styling tweaks */
+        .sidebar-content {
+            padding: 1.5rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
+st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
+
+st.title("Smart Grant Advisor")
+st.markdown("""
+Welcome to **Smart Grant Advisor** — your AI-powered tool to help Singapore SMEs navigate complex government grants.
+
+Use the sidebar to:
+-  Access the **Grant Eligibility Checker**
+-  Upload and review documents with the **Document Checker**
+
+---
+""")
+
+st.info("Start by selecting a tool from the sidebar on the left.")
+
+
 auto_data = {}
 
-# === Load API Key from .env ===
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY", "")
+# === Load API Key from Streamlit secrets ===
+import openai
+import streamlit as st
+
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # === Helper: Extract text from PDF ===
 def extract_text_from_pdf(file) -> str:
@@ -268,12 +342,6 @@ def fetch_edg_headlines():
         return results[:5], "Live scrape successful", datetime.datetime.now()
     except:
         return fallback, "Fallback (error)", datetime.datetime.now()
-        
-# === Main App UI ===
-st.set_page_config(page_title="Smart Grant Advisor 🇸🇬")
-st.title("🇸🇬 Singapore SME Grant Eligibility Checker")
-st.caption("Discover what grants you may qualify for — and what to prepare.")
-st.markdown("---")
 
 # === Form Fields ===
 st.markdown("### About Your Business")
@@ -508,3 +576,5 @@ This assistant helps Singapore SMEs explore grant eligibility and guidance.
 Not affiliated with GoBusiness or EnterpriseSG. Always confirm details at:
 https://www.gobusiness.gov.sg or https://www.enterprisesg.gov.sg
 """)
+
+
