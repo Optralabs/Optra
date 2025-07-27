@@ -429,9 +429,11 @@ if st.button("Check Eligibility"):
     prompt_parts.append("4. Provide checklist of documents to prepare.")
     prompt = "\n".join(prompt_parts)
     
-use_dummy = False  # make sure this is defined above
+use_dummy = False  # Set to True for testing without calling OpenAI
 
-# Start response logic
+# Prompt: gather user input or construct prompt from form data
+prompt = st.text_area("Enter your business details or grant-related question:")
+
 if use_dummy:
     response_text = """
 ### ✅ Eligible Grants
@@ -466,12 +468,17 @@ else:
             st.error(f"API error: {e}")
             st.stop()
 
-    st.success("✅ Results Ready")
-    st.markdown(response_text)
-    st.markdown("### 📋 Copy or Export Results")
-    st.text_area("Output Preview", value=response_text, height=300)
-    st.download_button("📄 Download as Text", response_text, file_name="grant_recommendation.txt")
-    st.download_button("📄 Download as PDF", generate_pdf(response_text), file_name="grant_recommendation.pdf")
+# Display results and download buttons
+st.success("✅ Results Ready")
+st.markdown(response_text)
+st.markdown("### 📋 Copy or Export Results")
+st.text_area("Output Preview", value=response_text, height=300)
+st.download_button("📄 Download as Text", response_text, file_name="grant_recommendation.txt")
+
+pdf_bytes = generate_pdf(response_text)
+if pdf_bytes:
+    st.download_button("📄 Download as PDF", data=pdf_bytes, file_name="grant_recommendation.pdf")
+
 
 st.markdown("---")
 
