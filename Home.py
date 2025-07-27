@@ -170,8 +170,6 @@ Be comprehensive and consider these grants (include others if relevant):
 - Local Employees: {local_employees}
 - Violations: {"Yes" if violations else "No"}
 
-{f"### Extracted Document Content:\n{doc_summary}" if doc_summary else ""}
-
 Return your response in **markdown format** with the following:
 1. ✅ **Eligible Grants** — List all relevant grants and why they apply
 2. ❗ **Missing Criteria or Risks** — Gaps that might disqualify the SME
