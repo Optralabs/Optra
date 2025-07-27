@@ -429,10 +429,11 @@ if st.button("Check Eligibility"):
     prompt_parts.append("4. Provide checklist of documents to prepare.")
     prompt = "\n".join(prompt_parts)
     
-use_dummy = False
+use_dummy = False  # Defined earlier
 
-    if use_dummy:
-        response_text = """
+# Start of response generation logic
+if use_dummy:
+    response_text = """
 ### ✅ Eligible Grants
 - Productivity Solutions Grant (PSG)
 
