@@ -7,6 +7,7 @@ import requests
 import datetime
 import re
 from fpdf import FPDF
+from io import BytesIO
 import pdfplumber
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -17,12 +18,12 @@ def generate_pdf(content: str) -> bytes:
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
 
-    for line in content.split('\n'):
+    for line in content.split("\n"):
         pdf.multi_cell(0, 10, line)
 
-    pdf_bytes = BytesIO()
-    pdf.output(pdf_bytes)
-    return pdf_bytes.getvalue()
+    pdf_string = pdf.output(dest='S').encode('latin1')
+    return pdf_string
+
 
 # ----------------------------
 # Load and embed OPTRA logo
