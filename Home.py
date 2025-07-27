@@ -139,8 +139,23 @@ if st.button("Check Eligibility"):
     with st.spinner("Analyzing eligibility with OpenAI..."):
         try:
             eligibility_prompt = f"""
-You are a smart grant advisor for Singaporean SMEs.
-Based on the following inputs, assess which grants the business is likely eligible for (PSG, EDG, SFEC) and explain why.
+You are Smart Grant Advisor, an expert in Singapore government grants for SMEs.
+
+Based on the following business information and optional document input, identify which government grants are suitable, explain eligibility criteria clearly, and note any missing elements.
+
+Be comprehensive and consider these grants (include others if relevant): 
+- PSG (Productivity Solutions Grant)
+- EDG (Enterprise Development Grant)
+- SFEC (SkillsFuture Enterprise Credit)
+- CTG (Career Trial Grant)
+- WSG P-Max
+- Startup SG Tech
+- EFS (Enterprise Financing Scheme)
+- ACT (Agri-Food Cluster Transformation)
+- Marine Shipyard Grant
+- Energy Efficiency Fund (E2F)
+- Green Transition (GIP)
+- Any other suitable sector-specific or transformation-focused grants.
 
 ### Business Info:
 - Industry: {industry}
@@ -155,13 +170,13 @@ Based on the following inputs, assess which grants the business is likely eligib
 - Local Employees: {local_employees}
 - Violations: {"Yes" if violations else "No"}
 
-{f"### Extracted Document:\n{doc_summary}" if doc_summary else ""}
+{f"### Extracted Document Content:\n{doc_summary}" if doc_summary else ""}
 
-Return a markdown report with:
-- ✅ Eligible Grants
-- 📋 Justification
-- 📂 Missing Documents
-- ❗ Ineligible Grants (if any)
+Return your response in **markdown format** with the following:
+1. ✅ **Eligible Grants** — List all relevant grants and why they apply
+2. ❗ **Missing Criteria or Risks** — Gaps that might disqualify the SME
+3. 📂 **Suggested Documents** — What documents or evidence to prepare
+4. 💡 **Additional Recommendations** — Any actions to strengthen application
 """
             response = client.chat.completions.create(
                 model="gpt-4o",
