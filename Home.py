@@ -116,202 +116,7 @@ def extract_data_from_text(text):
         data['industry'] = 'F&B'
     return data
 
-# === Eligibility Checks ===
-def check_psg_eligibility(industry, revenue, employees, years, ownership, goal):
-    reasons_ineligible = []
-    eligible = True
-    if ownership.lower() != "yes":
-        eligible = False
-        reasons_ineligible.append("Requires at least 30% local ownership.")
-    try:
-        revenue_val = float(str(revenue).replace(',', '').strip())
-    except:
-        revenue_val = 0
-    try:
-        employees_val = int(str(employees))
-    except:
-        employees_val = 0
-    if revenue_val >= 100_000_000 and employees_val > 200:
-        eligible = False
-        reasons_ineligible.append("Annual revenue must be less than S$100 million OR have 200 or fewer employees.")
-    psg_keywords = ['digital', 'equipment', 'automation', 'productivity', 'software', 'technology', 'digitalise', 'digitize']
-    if not any(k in goal.lower() for k in psg_keywords):
-        eligible = False
-        reasons_ineligible.append("Grant focuses on digitalisation or equipment solutions.")
-    try:
-        years_val = float(years)
-        if years_val <= 0:
-            eligible = False
-            reasons_ineligible.append("Business should be operational (years > 0).")
-    except:
-        eligible = False
-        reasons_ineligible.append("Invalid input for years in operation.")
-    return eligible, reasons_ineligible
-
-def check_edg_eligibility(industry, revenue, employees, years, ownership, goal):
-    reasons_ineligible = []
-    eligible = True
-    if ownership.lower() != "yes":
-        eligible = False
-        reasons_ineligible.append("Requires at least 30% local ownership.")
-    try:
-        years_val = float(years)
-        if years_val < 2:
-            eligible = False
-            reasons_ineligible.append("Requires at least 2 years in operation.")
-    except:
-        eligible = False
-        reasons_ineligible.append("Invalid input for years in operation.")
-    try:
-        revenue_val = float(str(revenue).replace(',', '').strip())
-        if revenue_val <= 0:
-            eligible = False
-            reasons_ineligible.append("Business should be financially viable with revenue > 0.")
-    except:
-        eligible = False
-        reasons_ineligible.append("Invalid input for annual revenue.")
-    edg_keywords = ['growth', 'expand', 'expansion', 'overseas', 'innovation', 'innovate', 'develop', 'research', 'upgrade']
-    if not any(k in goal.lower() for k in edg_keywords):
-        eligible = False
-        reasons_ineligible.append("Grant targets growth, overseas expansion, or innovation goals.")
-    return eligible, reasons_ineligible
-
-def check_sfec_eligibility(skills_levy_paid, local_employees, violations):
-    reasons_ineligible = []
-    eligible = True
-    try:
-        skills_levy_val = float(skills_levy_paid)
-        if skills_levy_val < 750:
-            eligible = False
-            reasons_ineligible.append("Skills Development Levy paid must be at least S$750 in the past year.")
-    except:
-        eligible = False
-        reasons_ineligible.append("Invalid input for Skills Development Levy paid.")
-    try:
-        local_employees_val = int(local_employees)
-        if local_employees_val < 3:
-            eligible = False
-            reasons_ineligible.append("Must have employed at least 3 local employees in the past year.")
-    except:
-        eligible = False
-        reasons_ineligible.append("Invalid input for number of local employees.")
-    if violations:
-        eligible = False
-        reasons_ineligible.append("Must have no outstanding MOM or IRAS violations.")
-    return eligible, reasons_ineligible
-
-# === PDF Export Function ===
-from fpdf import FPDF
-from io import BytesIO
-
-def generate_pdf(text):
-    class PDF(FPDF):
-        def header(self):
-            self.set_draw_color(180, 180, 180)
-            self.rect(10, 10, 190, 277)  # border
-            self.set_font("Helvetica", "B", 16)
-            self.cell(0, 10, "Grant Eligibility Report", ln=True, align="C")
-            self.ln(10)
-
-        def section_title(self, title):
-            self.set_font("Helvetica", "B", 13)
-            self.set_text_color(0)
-            self.cell(0, 10, title, ln=True)
-            self.set_text_color(0)
-
-        def section_body(self, body, size=11):
-            self.set_font("Helvetica", "", size)
-            self.multi_cell(0, 7, body)
-            self.ln()
-
-        def checklist(self, items):
-            self.set_font("Helvetica", "", 11)
-            for item in items:
-                self.cell(5)
-                self.cell(0, 7, f"- {item}", ln=True)
-            self.ln()
-
-    # Sanitize input: replace problematic punctuation with safe equivalents
-    text = text.replace("—", "-").replace("–", "-").replace("•", "-")
-    text = text.replace("✓", "").replace("✔", "").replace("✅", "")
-    text = text.replace("‘", "'").replace("’", "'").replace("“", '"').replace("”", '"')
-
-    # Remove remaining non-latin characters
-    clean_text = text.encode("ascii", "ignore").decode("ascii")
-
-    # Identify and extract sections
-    sections = {
-        "Eligible Grants": "",
-        "Justification": "",
-        "Documents to Prepare": "",
-        "Not Eligible For": "",
-        "Other Grants You Can Explore": ""
-    }
-
-    current = None
-    for line in clean_text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if "Eligible Grants" in line:
-            current = "Eligible Grants"
-            continue
-        elif "Justification" in line:
-            current = "Justification"
-            continue
-        elif "Documents to Prepare" in line:
-            current = "Documents to Prepare"
-            continue
-        elif "Not Eligible For" in line:
-            current = "Not Eligible For"
-            continue
-        elif "Other Grants You Can Explore" in line:
-            current = "Other Grants You Can Explore"
-            continue
-        if current:
-            sections[current] += line + "\n"
-
-    # Initialize PDF
-    pdf = PDF()
-    pdf.add_page()
-
-    if sections["Eligible Grants"]:
-        pdf.section_title("Eligible Grants")
-        pdf.section_body(sections["Eligible Grants"])
-
-    if sections["Justification"]:
-        pdf.section_title("Justification")
-        pdf.section_body(sections["Justification"], size=11)
-
-    if sections["Documents to Prepare"]:
-        checklist_items = [item.strip("- ") for item in sections["Documents to Prepare"].splitlines() if item.strip()]
-        pdf.section_title("Checklist of Documents")
-        pdf.checklist(checklist_items)
-
-    if sections["Not Eligible For"]:
-        pdf.section_title("Grants Not Eligible For")
-        pdf.section_body(sections["Not Eligible For"], size=11)
-
-    if sections["Other Grants You Can Explore"]:
-        pdf.section_title("Other Grants You Can Explore")
-        pdf.section_body(sections["Other Grants You Can Explore"], size=11)
-
-    # Add Tips section manually
-    pdf.section_title("Recommendations & Tips")
-    pdf.section_body("""- Consider working with pre-approved vendors to expedite PSG applications.
-- Ensure your ACRA BizFile is updated and reflects your operational activities.
-- For EDG eligibility in future, invest in capability-building or product innovation.
-- To qualify for SFEC, ensure timely CPF contributions and meet local hiring thresholds.
-- Keep records of past training, digitalisation, and transformation projects - they can support future claims.""", size=10)
-
-    # Final output to buffer
-    buffer = BytesIO()
-    pdf_bytes = pdf.output(dest="S").encode("latin-1", "replace")
-    buffer.write(pdf_bytes)
-    buffer.seek(0)
-    return buffer
-
-# === Form Fields ===
+# === About Your Business ===
 st.markdown("### About Your Business")
 industry = st.text_input("Industry / Sector", value=auto_data.get("industry") or "")
 revenue = st.text_input("Annual Revenue (SGD)")
@@ -335,6 +140,32 @@ if uploaded_file:
         auto_data = extract_data_from_text(all_text)
         st.success("✅ Document uploaded and analyzed.")
         st.text_area("Extracted Content (preview)", doc_summary, height=180)
+
+        if st.button("🧠 Run Document Analysis"):
+            with st.spinner("Analyzing document with OpenAI..."):
+                try:
+                    prompt_doc = f"""
+You are an expert on Singapore government grants. A user uploaded the following document (likely an ACRA BizFile or proposal).
+
+Please:
+1. Summarize the document in plain English.
+2. Explain how this information is relevant to applying for PSG, EDG, or SFEC.
+3. Flag any key information that seems missing or unclear.
+
+### Uploaded Document Text:
+{all_text[:3000]}
+"""
+                    doc_response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant that explains grant-related documents for Singapore SMEs."},
+                            {"role": "user", "content": prompt_doc}
+                        ]
+                    )
+                    st.markdown("### 🧾 Document Analysis")
+                    st.markdown(doc_response.choices[0].message.content)
+                except Exception as e:
+                    st.error(f"OpenAI API error during document analysis: {e}")
     except Exception as e:
         st.warning(f"Could not read PDF: {e}")
 
@@ -346,116 +177,64 @@ skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
 local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
 
-if st.button("Check Eligibility", key="check_eligibility_button"):
-    try:
-        revenue_val = float(re.sub(r"[^\d.]", "", revenue))
-        employees_val = int(employees)
-        years_val = float(years)
-        skills_levy_val = float(skills_levy_paid) if skills_levy_paid else 0
-        local_employees_val = int(local_employees) if local_employees else 0
-    except Exception:
-        st.error("Please enter valid numbers for Revenue, Employees, Years, Skills Levy, and Local Employees.")
-        st.stop()
+# === Eligibility Check Button ===
+st.markdown("## 🧾 Grant Eligibility Checker")
 
-    ownership_val = ownership.lower()
-    violations_val = violations
+if st.button("✅ Check Eligibility"):
+    with st.spinner("Analyzing eligibility with OpenAI..."):
+        try:
+            prompt = f"""
+You are a smart grant advisor for Singaporean SMEs.
+Based on the following inputs, assess which grants the business is likely eligible for (PSG, EDG, SFEC), and explain why in clear terms.
 
-    # Check eligibility
-    psg_ok, psg_why = check_psg_eligibility(industry, revenue_val, employees_val, years_val, ownership_val, goal)
-    edg_ok, edg_why = check_edg_eligibility(industry, revenue_val, employees_val, years_val, ownership_val, goal)
-    sfec_ok, sfec_why = check_sfec_eligibility(skills_levy_val, local_employees_val, violations_val)
+### Business Info:
+- Industry: {industry}
+- Revenue: {revenue}
+- Employees: {employees}
+- Years in Operation: {years}
+- Local Ownership ≥30%: {ownership}
+- Business Goal: {goal}
 
-    eligible = []
-    not_eligible = []
-    if psg_ok: eligible.append("PSG")
-    else: not_eligible.append("PSG: " + ", ".join(psg_why))
-    if edg_ok: eligible.append("EDG")
-    else: not_eligible.append("EDG: " + ", ".join(edg_why))
-    if sfec_ok: eligible.append("SFEC")
-    else: not_eligible.append("SFEC: " + ", ".join(sfec_why))
+### SFEC:
+- SDL Paid Last Year: {skills_levy_paid}
+- Local Employees: {local_employees}
+- Violations: {"Yes" if violations else "No"}
 
-    prompt_parts = [
-        "You are a Smart Grant Advisor for Singapore SMEs.",
-        "",
-        "Business Profile:",
-        f"- Industry: {industry}",
-        f"- Revenue: {revenue}",
-        f"- Employees: {employees}",
-        f"- Years in Operation: {years}",
-        f"- Local Ownership ≥30%?: {ownership}",
-        f"- Business Goal: {goal}"
-    ]
-    if auto_data.get("uen"):
-        prompt_parts.append(f"- UEN: {auto_data['uen']}")
-    if doc_summary:
-        prompt_parts.append(f"Supporting Document Extract:\n{doc_summary}")
-    prompt_parts.append("")
-    prompt_parts.append("Your task:")
-    prompt_parts.append("1. List eligible grants.")
-    prompt_parts.append("2. Explain ineligibility where applicable.")
-    prompt_parts.append("3. Suggest how to qualify in the future.")
-    prompt_parts.append("4. Provide checklist of documents to prepare.")
-    prompt = "\n".join(prompt_parts)
+{f"### Extracted Document:\n{doc_summary}" if doc_summary else ""}
 
-use_dummy = False  # Set to True for testing without calling OpenAI
-
-prompt = st.text_area("Enter your business details or grant-related question:")
-
-# Use session state to store response so it persists after rerun
-if "response_text" not in st.session_state:
-    st.session_state.response_text = ""
-
-if st.button("Check Eligibility"):
-    if use_dummy:
-        st.session_state.response_text = """
-### ✅ Eligible Grants
-- Productivity Solutions Grant (PSG)
-
-### 💬 Justification
-Your SME is aligned with digitalisation goals and has the necessary ownership and size to qualify for PSG.
-
-### 📂 Documents to Prepare
-- Latest ACRA BizFile
-- Financial Statements
-- Vendor quotation (for PSG)
-- Proof of local employees
-
-### ❗ Not Eligible For
-- **EDG**: Requires ≥2 years in operation and growth/innovation goals.
-- **SFEC**: Must meet S$750 levy + ≥3 local staff + no violations.
+Return a markdown report with:
+- ✅ Eligible Grants
+- 📋 Justification
+- 📂 Missing Documents
+- ❗ Ineligible Grants (if any)
 """
-    else:
-        with st.spinner("Analyzing via OpenAI..."):
-            try:
-                res = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": "You are a Smart Grant Advisor for Singapore SMEs."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.6
-                )
-                st.session_state.response_text = res.choices[0].message.content
-            except Exception as e:
-                st.error(f"API error: {e}")
-                st.stop()
- 
-# Display results and download buttons
-if st.session_state.response_text:
-    st.success("✅ Results Ready")
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a helpful and precise grant advisor for Singaporean SMEs."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            st.session_state.response_text = response.choices[0].message.content
+            st.success("✅ Eligibility analysis complete.")
+        except Exception as e:
+            st.error(f"OpenAI API error: {e}")
+
+# === PDF Export Section ===
+if st.session_state.get("response_text"):
+    st.markdown("### 📋 Results")
     st.markdown(st.session_state.response_text)
-    st.markdown("### 📋 Copy or Export Results")
+
+    # Download Buttons
+    st.markdown("#### 📁 Export Results")
     st.text_area("Output Preview", value=st.session_state.response_text, height=300)
-    st.download_button("📄 Download as Text", st.session_state.response_text, file_name="grant_recommendation.txt")
 
     pdf_bytes = generate_pdf(st.session_state.response_text)
     if pdf_bytes:
-        st.download_button("📄 Download as PDF", data=pdf_bytes, file_name="grant_recommendation.pdf")
+        st.download_button("📄 Download as PDF", data=pdf_bytes, file_name="grant_eligibility.pdf")
+    st.download_button("📄 Download as Text", st.session_state.response_text, file_name="grant_recommendation.txt")
 else:
-    st.info("Fill in the details and click 'Check Eligibility' to get results.")
-
-st.markdown("---")
-
+    st.info("Fill in your business details and click 'Check Eligibility' to get results.")
 
 # === Main App UI ===
 st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
@@ -527,7 +306,7 @@ st.subheader("Ask a Question")
 
 faq = st.text_area("Enter a question about Singapore SME grants, criteria, or your uploaded documents:")
 
-if st.button("Submit FAQ"):
+if st.button("Submit"):
     if not faq.strip():
         st.warning("Please enter a question before submitting.")
     else:
@@ -570,5 +349,6 @@ This assistant helps Singapore SMEs explore grant eligibility and guidance.
 Not affiliated with GoBusiness or EnterpriseSG. Always confirm details at:
 https://www.gobusiness.gov.sg or https://www.enterprisesg.gov.sg
 """)
+
 
 
