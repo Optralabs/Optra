@@ -311,40 +311,6 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
-# === Scrape PSG Solutions ===
-@st.cache_data(ttl=3600)
-def fetch_psg_solutions():
-    fallback = [("eCommerce Solutions", "Tools for online selling."),
-                ("Cybersecurity Tools", "Packages for small biz protection."),
-                ("Accounting Systems", "Automate invoicing and expenses.")]
-    try:
-        url = "https://www.gobusiness.gov.sg/productivity-solutions-grant/solutions/"
-        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        if res.status_code != 200:
-            return fallback, "Fallback (bad response)", datetime.datetime.now()
-        soup = BeautifulSoup(res.text, "html.parser")
-        cards = soup.select(".solution-card")
-        data = [(c.select_one(".solution-name").text.strip(), c.select_one(".solution-description").text.strip()) for c in cards[:5]]
-        return data or fallback, "Live scrape successful", datetime.datetime.now()
-    except:
-        return fallback, "Fallback (error)", datetime.datetime.now()
-
-# === Scrape EDG Headlines ===
-@st.cache_data(ttl=3600)
-def fetch_edg_headlines():
-    fallback = [("Strategic Brand & Marketing Development", ""), ("Overseas Expansion Planning", "")]
-    try:
-        url = "https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/overview"
-        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        if res.status_code != 200:
-            return fallback, "Fallback (bad response)", datetime.datetime.now()
-        soup = BeautifulSoup(res.text, "html.parser")
-        headers = soup.select("h2, h3")
-        results = [(h.text.strip(), "") for h in headers if len(h.text.strip()) > 4]
-        return results[:5], "Live scrape successful", datetime.datetime.now()
-    except:
-        return fallback, "Fallback (error)", datetime.datetime.now()
-
 # === Form Fields ===
 st.markdown("### About Your Business")
 industry = st.text_input("Industry / Sector", value=auto_data.get("industry") or "")
