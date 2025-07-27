@@ -529,48 +529,6 @@ for tip in tips:
 
 st.markdown("---")
 
-# === Grant Listings Section ===
-st.header("Live PSG, EDG and SFEC Information")
-st.markdown("---")
-
-st.markdown("### Productivity Solutions Grant (PSG)")
-psg_data, psg_status, psg_time = fetch_psg_solutions()
-st.markdown("Supports adoption of pre-approved IT tools and equipment for productivity.")
-st.markdown(f"**Last updated:** {psg_time.strftime('%Y-%m-%d %H:%M')} — {psg_status}")
-for title, desc in psg_data:
-    st.markdown(f"- **{title}**\n  {desc}")
-st.markdown("*Useful Links:*")
-st.markdown("""
-- [PSG Overview](https://www.gobusiness.gov.sg/productivity-solutions-grant/)
-- [Browse Solutions](https://www.gobusiness.gov.sg/productivity-solutions-grant/solutions/)
-- [Eligibility](https://www.gobusiness.gov.sg/grants/psg/eligibility/)
-- [How to Apply](https://www.gobusiness.gov.sg/productivity-solutions-grant/apply/)
-""")
-
-st.markdown("### Enterprise Development Grant (EDG)")
-st.markdown("EDG supports larger-scale projects for innovation, capability building, and market expansion.")
-edg_data, edg_status, edg_time = fetch_edg_headlines()
-st.markdown(f"**Last updated:** {edg_time.strftime('%Y-%m-%d %H:%M')} — {edg_status}")
-for header, _ in edg_data:
-    st.markdown(f"- {header}")
-st.markdown("*Useful Links:*")
-st.markdown("""
-- [EDG Overview](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/overview)
-- [Eligibility](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/eligibility)
-- [Project Types](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/project-categories)
-- [How to Apply](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/how-to-apply)
-""")
-
-st.markdown("### SkillsFuture Enterprise Credit (SFEC)")
-st.markdown("SFEC provides $10,000 credits to eligible employers undertaking workforce or business transformation efforts.")
-st.markdown("*Useful Links:*")
-st.markdown("""
-- [SFEC Info](https://www.skillsfuture.gov.sg/sfec)
-- [Eligibility](https://www.skillsfuture.gov.sg/sfec/eligibility)
-- [How to Use](https://www.skillsfuture.gov.sg/sfec/how-to-apply)
-""")
-
-st.markdown("---")
 
 # === FAQ Section ===
 st.subheader("Ask a Question")
