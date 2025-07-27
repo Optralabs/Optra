@@ -137,63 +137,63 @@ st.markdown("### About Your Business")
 
 industry = st.text_input("Industry / Sector", value=auto_data.get("industry") or "")
 revenue = st.text_input("Annual Revenue (SGD)")
-employees = st.text_input("No. of Employees")
+employees = st.text_input("Number of Employees")
 years = st.text_input("Years in Operation")
 ownership = st.selectbox("Is Local Ownership ≥30%?", ["Yes", "No"], index=0)
-goal = st.text_input("What do you want to achieve with a grant?")
+goal = st.text_input("What do you want to achieve with a grant? (e.g., digital transformation, market expansion, workforce training)")
 
-# === SFEC Specific Details ===
-st.markdown("### SFEC Specific Details")
+# === Workforce & Compliance Details ===
+st.markdown("### Workforce & Compliance Details (Optional but Recommended)")
 skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
 local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
 
-# === Check Eligibility (Combined Logic) ===
+# === Check Eligibility ===
 if st.button("Check Eligibility"):
     with st.spinner("Analyzing eligibility with OpenAI..."):
         try:
             eligibility_prompt = f"""
 You are Smart Grant Advisor, an expert in Singapore government grants for SMEs.
 
-Based on the following business information and optional document input, identify which government grants are suitable, explain eligibility criteria clearly, and note any missing elements.
+Given the business details below, identify all relevant government grants that this SME is likely eligible for, covering but not limited to:  
+- Productivity Solutions Grant (PSG)  
+- Enterprise Development Grant (EDG)  
+- SkillsFuture Enterprise Credit (SFEC)  
+- Career Trial Grant (CTG)  
+- WSG P-Max  
+- Startup SG Tech  
+- Enterprise Financing Scheme (EFS)  
+- Agri-Food Cluster Transformation (ACT)  
+- Marine Shipyard Grant  
+- Energy Efficiency Fund (E2F)  
+- Green Incentive Programme (GIP)  
+- Other sector-specific or transformation grants relevant to the info provided.
 
-Be comprehensive and consider these grants (include others if relevant): 
-- PSG (Productivity Solutions Grant)
-- EDG (Enterprise Development Grant)
-- SFEC (SkillsFuture Enterprise Credit)
-- CTG (Career Trial Grant)
-- WSG P-Max
-- Startup SG Tech
-- EFS (Enterprise Financing Scheme)
-- ACT (Agri-Food Cluster Transformation)
-- Marine Shipyard Grant
-- Energy Efficiency Fund (E2F)
-- Green Transition (GIP)
-- Any other suitable sector-specific or transformation-focused grants.
+For each eligible grant, provide:  
+1. A clear explanation of eligibility criteria as it applies to this business.  
+2. Potential gaps or risks that might affect eligibility or application success.  
+3. A tailored checklist of documents or evidence needed for application.  
+4. Practical recommendations to improve eligibility or strengthen application chances.
 
-### Business Info:
+### Business Information:
 - Industry: {industry}
-- Revenue: {revenue}
-- Employees: {employees}
+- Annual Revenue (SGD): {revenue}
+- Number of Employees: {employees}
 - Years in Operation: {years}
 - Local Ownership ≥30%: {ownership}
-- Business Goal: {goal}
+- Grant Objective: {goal}
 
-### SFEC:
-- SDL Paid Last Year: {skills_levy_paid}
-- Local Employees: {local_employees}
-- Violations: {"Yes" if violations else "No"}
+### Workforce & Compliance Details:
+- Skills Development Levy Paid Last Year: {skills_levy_paid}
+- Number of Local Employees: {local_employees}
+- Outstanding MOM or IRAS Violations: {"Yes" if violations else "No"}
 
-Return your response in **markdown format** with the following:
-1.  **Eligible Grants** — List all relevant grants and why they apply
-2.  **Missing Criteria or Risks** — Gaps that might disqualify the SME
-3.  **Suggested Documents** — What documents or evidence to prepare
-4.  **Additional Recommendations** — Any actions to strengthen application
+Please return your response in markdown format, structured with headings and bullet points for easy readability by SME owners.
 """
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "You are a helpful and precise grant advisor for Singaporean SMEs."},
+                    {"role": "system", "content": "You are a helpful, accurate, and business-friendly grant advisor for Singapore SMEs."},
                     {"role": "user", "content": eligibility_prompt}
                 ]
             )
@@ -202,17 +202,21 @@ Return your response in **markdown format** with the following:
         except Exception as e:
             st.error(f"OpenAI API error: {e}")
 
-# === Display and Export Results ===
+# === Display & Export Results ===
 if st.session_state.get("response_text"):
     st.markdown("### Eligibility Result")
     st.markdown(st.session_state.response_text)
 
     pdf_bytes = generate_pdf(st.session_state.response_text)
     if pdf_bytes:
-        st.download_button("Download as PDF", data=pdf_bytes, file_name="grant_eligibility.pdf")
+        st.download_button("Download Eligibility Report (PDF)", data=pdf_bytes, file_name="grant_eligibility_report.pdf")
 
-    st.download_button("Download as Text", st.session_state.response_text, file_name="grant_eligibility.txt")
-    st.text_area("Preview", value=st.session_state.response_text, height=300)
+    st.download_button("Download Eligibility Report (Text)", data=st.session_state.response_text, file_name="grant_eligibility_report.txt")
+    st.text_area("Preview of Report", value=st.session_state.response_text, height=300)
+else:
+    st.info("Fill in your business details and click 'Check Eligibility' to get a tailored grant report.")
+
+st.markdown("---")
 
 # === Upload Supporting Business Document ===
 st.markdown("---")
