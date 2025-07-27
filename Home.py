@@ -16,13 +16,20 @@ def generate_pdf(content: str) -> bytes:
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("Garamond", size=11)
 
-    for line in content.split("\n"):
+    cleaned_content = clean_text(content)  # clean first
+
+    for line in cleaned_content.split("\n"):
         pdf.multi_cell(0, 10, line)
 
     pdf_string = pdf.output(dest='S').encode('latin1')
     return pdf_string
+
+def clean_text(text):
+    return text.encode('latin1', 'replace').decode('latin1')
+
+
 
 
 # ----------------------------
@@ -216,7 +223,6 @@ if st.session_state.get("response_text"):
 else:
     st.info("Fill in your business details and click 'Check Eligibility' to get a tailored grant report.")
 
-st.markdown("---")
 
 # === Upload Supporting Business Document ===
 st.markdown("---")
