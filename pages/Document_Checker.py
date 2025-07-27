@@ -1,3 +1,4 @@
+# === Imports & Setup ===
 import streamlit as st
 import pdfplumber
 import openai
@@ -11,7 +12,6 @@ from PIL import Image
 import pytesseract
 import fitz  # PyMuPDF
 
-# Load environment
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 use_dummy_mode = not bool(OPENAI_API_KEY)
@@ -19,8 +19,37 @@ if not use_dummy_mode:
     openai.api_key = OPENAI_API_KEY
 
 # ----------------------------
-# Extract text from PDF with OCR fallback
+# Load and embed OPTRA logo
 # ----------------------------
+from PIL import Image
+import base64
+from io import BytesIO
+import streamlit as st
+
+def get_logo_base64(path, width=80):
+    img = Image.open(path)
+    img = img.resize((width, width), Image.Resampling.LANCZOS)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+# Set your logo path
+logo_base64 = get_logo_base64("optra_logo_transparent.png")
+
+# Display logo and brand (only once)
+st.markdown(
+    f"""
+    <div style='display: flex; align-items: center; margin-bottom: 2rem;'>
+        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
+        <div>
+            <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# === PDF Extraction ===
 def extract_text_from_pdf(uploaded_file):
     try:
         with pdfplumber.open(uploaded_file) as pdf:
@@ -30,7 +59,6 @@ def extract_text_from_pdf(uploaded_file):
     except:
         pass
 
-    # OCR fallback
     text = ""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(uploaded_file.read())
@@ -44,9 +72,7 @@ def extract_text_from_pdf(uploaded_file):
 
     return re.sub(r'Page\s*\d+', '', text)
 
-# ----------------------------
-# Extract key fields
-# ----------------------------
+# === Field Extraction ===
 def extract_fields(text):
     fields = {}
     fields["Project Title"] = re.search(r'Project Title[:\-]?\s*(.+)', text, re.IGNORECASE)
@@ -65,9 +91,7 @@ def extract_fields(text):
         clean["Objectives"] = [line.strip('- ').strip() for line in lines if line.strip()]
     return clean
 
-# ----------------------------
-# Analyze content with GPT or dummy fallback
-# ----------------------------
+# === Analysis with OpenAI or Dummy ===
 def analyze_text(text):
     if use_dummy_mode:
         return {
@@ -105,9 +129,7 @@ def analyze_text(text):
             sections[current].append(cleaned)
     return sections
 
-# ----------------------------
-# PDF + TXT Export
-# ----------------------------
+# === PDF Export ===
 class StyledPDF(FPDF):
     def header(self):
         self.set_font("Helvetica", "B", 16)
@@ -149,30 +171,70 @@ def generate_txt(mistakes, recommendations):
     out += "\n\nChecklist:\n- Latest ACRA BizFile\n- Financial Statements\n- Vendor quotation\n- Proof of local employees"
     return out.encode("utf-8")
 
-# ----------------------------
-# Streamlit UI
-# ----------------------------
-st.set_page_config(page_title="Grant Application Checker", layout="centered")
-st.title("Grant Application Checker")
+# === Custom UI Styling ===
+st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
 
-st.markdown(
-    "Upload a grant application PDF (text-based or scanned). This tool extracts content, detects mistakes, "
-    "and offers improvement suggestions tailored to Singapore grants like PSG and EDG."
-)
+# ----------------------------
+# 🧩 OPTRA Sidebar Setup
+# ----------------------------
+st.markdown("""
+    <style>
+        /* Force sidebar background to black */
+        section[data-testid="stSidebar"] {
+            background-color: #000000 !important;
+        }
+        /* Sidebar text color */
+        section[data-testid="stSidebar"] .css-1v0mbdj, 
+        section[data-testid="stSidebar"] .css-1wvsk6o {
+            color: #ffffff !important;
+        }
+        /* Optional spacing and styling tweaks */
+        .sidebar-content {
+            padding: 1.5rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+st.markdown("""
+    <style>
+        html, body, [data-testid="stAppViewContainer"] {
+            background: linear-gradient(to bottom, #0a0a0a 0%, #0a0a0a 10%, #0d0f1c 30%, #0f111f 60%, #00011d 100%) !important;
+            color: #ffffff;
+        }
+        .block-container { background-color: rgba(0, 0, 0, 0) !important; }
+        input, textarea, select {
+            background-color: #111729 !important;
+            color: #ffffff !important;
+            border: 1px solid #2b3a5e !important;
+        }
+        ::placeholder { color: #888 !important; }
+        button[kind="primary"] {
+            background-color: #3e6ce2 !important;
+            color: white !important;
+            border-radius: 8px !important;
+        }
+        h1, h2, h3 {
+            text-shadow: 0 0 4px rgba(0,0,0,0.4);
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# === Main UI Content ===
+st.title("Singapore SME Grant Eligibility Checker")
+st.caption("Discover what grants you may qualify for — and what to prepare.")
+st.markdown("---")
+
+uploaded_file = st.file_uploader("Upload your grant application PDF", type=["pdf"])
 
 if uploaded_file:
-    st.markdown("---")
-    st.subheader("Extracted Grant Summary")
-
-    with st.spinner("Processing your file..."):
+    with st.spinner("Extracting and analyzing your file..."):
         extracted = extract_text_from_pdf(uploaded_file)
         parsed = extract_fields(extracted)
 
     if not extracted.strip():
-        st.warning("No readable text found in your PDF.")
+        st.warning("No readable text found in the uploaded PDF.")
     else:
+        st.subheader("🧾 Key Fields Extracted")
         for field, value in parsed.items():
             if field == "Objectives" and isinstance(value, list):
                 st.markdown("**Objectives:**")
@@ -181,29 +243,32 @@ if uploaded_file:
             else:
                 st.markdown(f"**{field}:** {value}")
 
-        st.markdown("**Full Extracted Text:**")
+        st.subheader("📄 Full Extracted Text")
         formatted_text = re.sub(r'Page\s*\d+', '', extracted.strip()).replace("\n", "\n\n")
         st.markdown(
-    f"<div style='background-color:#f8f9fa;padding:1rem;border-radius:6px;color:#000;'>"
-    f"<pre style='white-space:pre-wrap; font-family:monospace; color:#000;'>{formatted_text}</pre>"
-    f"</div>",
-    unsafe_allow_html=True
+            f"<div style='background-color:#1e293b;padding:1rem;border-radius:6px;'>"
+            f"<pre style='white-space:pre-wrap; font-family:monospace; color:#fff;'>{formatted_text}</pre>"
+            f"</div>",
+            unsafe_allow_html=True
         )
 
-        with st.spinner("Analyzing with AI..."):
+        with st.spinner("Running AI analysis..."):
             results = analyze_text(extracted)
 
         st.success("Review complete.")
-        st.subheader("Mistakes")
+        st.subheader("❌ Mistakes Found")
         for m in results["mistakes"]:
             st.markdown(f"- {m}")
-        st.subheader("Recommendations")
+
+        st.subheader("✅ Recommendations")
         for r in results["recommendations"]:
             st.markdown(f"- {r}")
 
-        st.subheader("Download Report")
+        st.subheader("📥 Download Your Report")
         st.download_button("Download PDF", generate_pdf(results["mistakes"], results["recommendations"]), file_name="grant_review.pdf")
         st.download_button("Download TXT", generate_txt(results["mistakes"], results["recommendations"]), file_name="grant_review.txt")
-
 else:
     st.info("Please upload a grant application PDF to begin.")
+
+
+
