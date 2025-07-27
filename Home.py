@@ -74,8 +74,8 @@ st.markdown("""
 Welcome to **Smart Grant Advisor** — your AI-powered tool to help Singapore SMEs navigate complex government grants.
 
 Use the sidebar to:
--  Access the **Grant Eligibility Checker**
 -  Upload and review documents with the **Document Checker**
+-  Access Live Grant Insights **
 
 ---
 """)
