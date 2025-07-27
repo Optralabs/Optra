@@ -3,8 +3,6 @@ import requests
 import datetime
 from bs4 import BeautifulSoup
 
-st.title("Live Grant Scraper")
-
 # Load and embed OPTRA logo
 # ----------------------------
 from PIL import Image
@@ -79,6 +77,8 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
+st.title("Live Grant Scraper")
 
 # Inject global custom CSS for LanX-style gradient + form elements
 st.markdown("""
