@@ -5,6 +5,47 @@ from bs4 import BeautifulSoup
 
 st.title("Live Grant Scraper")
 
+# Inject global custom CSS for LanX-style gradient + form elements
+st.markdown("""
+    <style>
+        /* Full-page gradient background */
+        html, body, [data-testid="stAppViewContainer"] {
+            background: linear-gradient(to bottom, #0a0a0a 0%, #0a0a0a 10%, #0d0f1c 30%, #0f111f 60%, #00011d 100%) !important;
+            color: #ffffff;
+        }
+
+        /* Remove extra white backgrounds in containers */
+        .block-container {
+            background-color: rgba(0, 0, 0, 0) !important;
+        }
+
+        /* Text input, selectbox, textarea styling */
+        input, textarea, select {
+            background-color: #111729 !important;
+            color: #ffffff !important;
+            border: 1px solid #2b3a5e !important;
+        }
+
+        /* Placeholder text color */
+        ::placeholder {
+            color: #888 !important;
+        }
+
+        /* Button style */
+        button[kind="primary"] {
+            background-color: #3e6ce2 !important;
+            color: white !important;
+            border-radius: 8px !important;
+        }
+
+        /* Optional: shadow box for main headings */
+        h1, h2, h3 {
+            text-shadow: 0 0 4px rgba(0,0,0,0.4);
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
 # Cache with TTL removed, because we want manual control now
 
 def fetch_psg_solutions():
@@ -78,3 +119,5 @@ if st.session_state.edg_data:
 
 if not (st.session_state.psg_data or st.session_state.edg_data):
     st.info("Click the button above to start scraping live grant data.")
+
+
