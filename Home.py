@@ -160,53 +160,6 @@ if st.session_state.get("eligibility_response"):
     if pdf_bytes:
         st.download_button("Download Eligibility as PDF", data=pdf_bytes, file_name="eligibility_report.pdf")
 
-
-# === Optional Document Upload ===
-st.markdown("### Upload Supporting Business Document (Optional)")
-st.markdown("_We’ll analyze your uploaded document to tailor grant recommendations._")
-uploaded_file = st.file_uploader("Upload a PDF document (e.g. ACRA BizFile)", type=["pdf"])
-
-doc_summary = ""
-auto_data = {}
-
-if uploaded_file:
-    try:
-        all_text = extract_text_from_pdf(uploaded_file)
-        doc_summary = all_text[:2000]
-        auto_data = extract_data_from_text(all_text)
-        st.success("Document uploaded and analyzed.")
-        st.text_area("Extracted Content (preview)", doc_summary, height=180)
-
-        if st.button("Run Document Analysis"):
-            with st.spinner("Analyzing document with OpenAI..."):
-                try:
-                    prompt_doc = f"""
-You are an expert on Singapore government grants. A user uploaded the following document (likely an ACRA BizFile or proposal).
-
-Please:
-1. Summarize the document in plain English.
-2. Explain how this information is relevant to applying for PSG, EDG, or SFEC.
-3. Flag any key information that seems missing or unclear.
-
-### Uploaded Document Text:
-{all_text[:3000]}
-"""
-                    doc_response = client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[
-                            {"role": "system", "content": "You are a helpful assistant that explains grant-related documents for Singapore SMEs."},
-                            {"role": "user", "content": prompt_doc}
-                        ]
-                    )
-                    st.markdown("### 🧾 Document Analysis")
-                    st.markdown(doc_response.choices[0].message.content)
-                except Exception as e:
-                    st.error(f"OpenAI API error during document analysis: {e}")
-    except Exception as e:
-        st.warning(f"Could not read PDF: {e}")
-
-st.markdown("---")
-
 # === SFEC Inputs ===
 st.markdown("### SFEC Specific Details")
 skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
@@ -271,6 +224,53 @@ if st.session_state.get("response_text"):
     st.download_button("📄 Download as Text", st.session_state.response_text, file_name="grant_recommendation.txt")
 else:
     st.info("Fill in your business details and click 'Check Eligibility' to get results.")
+
+# === Optional Document Upload ===
+st.markdown("### Upload Supporting Business Document (Optional)")
+st.markdown("_We’ll analyze your uploaded document to tailor grant recommendations._")
+uploaded_file = st.file_uploader("Upload a PDF document (e.g. ACRA BizFile)", type=["pdf"])
+
+doc_summary = ""
+auto_data = {}
+
+if uploaded_file:
+    try:
+        all_text = extract_text_from_pdf(uploaded_file)
+        doc_summary = all_text[:2000]
+        auto_data = extract_data_from_text(all_text)
+        st.success("Document uploaded and analyzed.")
+        st.text_area("Extracted Content (preview)", doc_summary, height=180)
+
+        if st.button("Run Document Analysis"):
+            with st.spinner("Analyzing document with OpenAI..."):
+                try:
+                    prompt_doc = f"""
+You are an expert on Singapore government grants. A user uploaded the following document (likely an ACRA BizFile or proposal).
+
+Please:
+1. Summarize the document in plain English.
+2. Explain how this information is relevant to applying for PSG, EDG, or SFEC.
+3. Flag any key information that seems missing or unclear.
+
+### Uploaded Document Text:
+{all_text[:3000]}
+"""
+                    doc_response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant that explains grant-related documents for Singapore SMEs."},
+                            {"role": "user", "content": prompt_doc}
+                        ]
+                    )
+                    st.markdown("### 🧾 Document Analysis")
+                    st.markdown(doc_response.choices[0].message.content)
+                except Exception as e:
+                    st.error(f"OpenAI API error during document analysis: {e}")
+    except Exception as e:
+        st.warning(f"Could not read PDF: {e}")
+
+st.markdown("---")
+
 
 # === Main App UI ===
 st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
