@@ -75,7 +75,7 @@ Welcome to **Smart Grant Advisor** — your AI-powered tool to help Singapore SM
 
 Use the sidebar to:
 -  Upload and review documents with the **Document Checker**
--  Access Live Grant Insights **
+-  Access **Live Grant Insights**
 
 ---
 """)
