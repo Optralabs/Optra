@@ -346,7 +346,7 @@ skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
 local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
 
-if st.button("Check Eligibility"):
+if st.button("Check Eligibility", key="check_eligibility_button"):
     try:
         revenue_val = float(re.sub(r"[^\d.]", "", revenue))
         employees_val = int(employees)
