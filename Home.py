@@ -167,8 +167,6 @@ local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
 
 # === Eligibility Check Button ===
-st.markdown("## Grant Eligibility Checker")
-
 if st.button("Check Eligibility"):
     with st.spinner("Analyzing eligibility with OpenAI..."):
         try:
@@ -224,6 +222,8 @@ if st.session_state.get("response_text"):
     st.download_button("📄 Download as Text", st.session_state.response_text, file_name="grant_recommendation.txt")
 else:
     st.info("Fill in your business details and click 'Check Eligibility' to get results.")
+
+st.markdown("---")
 
 # === Optional Document Upload ===
 st.markdown("### Upload Supporting Business Document (Optional)")
