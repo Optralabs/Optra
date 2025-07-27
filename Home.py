@@ -464,7 +464,7 @@ else:
             response_text = res.choices[0].message.content
         except Exception as e:
             st.error(f"API error: {e}")
-                st.stop()
+            st.stop()
 
     st.success("✅ Results Ready")
     st.markdown(response_text)
