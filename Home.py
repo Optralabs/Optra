@@ -449,18 +449,21 @@ else:
 
  
 # Display results and download buttons
-st.success("✅ Results Ready")
-st.markdown(response_text)
-st.markdown("### 📋 Copy or Export Results")
-st.text_area("Output Preview", value=response_text, height=300)
-st.download_button("📄 Download as Text", response_text, file_name="grant_recommendation.txt")
+if st.session_state.response_text:
+    st.success("✅ Results Ready")
+    st.markdown(st.session_state.response_text)
+    st.markdown("### 📋 Copy or Export Results")
+    st.text_area("Output Preview", value=st.session_state.response_text, height=300)
+    st.download_button("📄 Download as Text", st.session_state.response_text, file_name="grant_recommendation.txt")
 
-pdf_bytes = generate_pdf(response_text)
-if pdf_bytes:
-    st.download_button("📄 Download as PDF", data=pdf_bytes, file_name="grant_recommendation.pdf")
-
+    pdf_bytes = generate_pdf(st.session_state.response_text)
+    if pdf_bytes:
+        st.download_button("📄 Download as PDF", data=pdf_bytes, file_name="grant_recommendation.pdf")
+else:
+    st.info("Fill in the details and click 'Check Eligibility' to get results.")
 
 st.markdown("---")
+
 
 # === Main App UI ===
 st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
