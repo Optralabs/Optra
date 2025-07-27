@@ -429,9 +429,9 @@ if st.button("Check Eligibility"):
     prompt_parts.append("4. Provide checklist of documents to prepare.")
     prompt = "\n".join(prompt_parts)
     
-use_dummy = False  # Defined earlier
+use_dummy = False  # make sure this is defined above
 
-# Start of response generation logic
+# Start response logic
 if use_dummy:
     response_text = """
 ### ✅ Eligible Grants
@@ -450,20 +450,20 @@ Your SME is aligned with digitalisation goals and has the necessary ownership an
 - **EDG**: Requires ≥2 years in operation and growth/innovation goals.
 - **SFEC**: Must meet S$750 levy + ≥3 local staff + no violations.
 """
-    else:
-        with st.spinner("Analyzing via OpenAI..."):
-            try:
-                res = openai.ChatCompletion.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": "You are a Smart Grant Advisor for Singapore SMEs."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.6
-                )
-                response_text = res.choices[0].message.content
-            except Exception as e:
-                st.error(f"API error: {e}")
+else:
+    with st.spinner("Analyzing via OpenAI..."):
+        try:
+            res = openai.ChatCompletion.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a Smart Grant Advisor for Singapore SMEs."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.6
+            )
+            response_text = res.choices[0].message.content
+        except Exception as e:
+            st.error(f"API error: {e}")
                 st.stop()
 
     st.success("✅ Results Ready")
