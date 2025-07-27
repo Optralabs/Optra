@@ -221,7 +221,7 @@ st.markdown("""
 
 # === Main UI Content ===
 st.title("Optra Document Analysis")
-st.caption("Upload your grant application documents here to understand how and what to improve to strengthen your application. ")
+st.caption("Upload your grant application and instantly check for issues. Our AI highlights missing details, suggests improvements, and boosts your chances of approval with tailored recommendations. ")
 st.markdown("---")
 
 uploaded_file = st.file_uploader("Upload your grant application PDF", type=["pdf"])
