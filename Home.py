@@ -524,28 +524,37 @@ st.markdown("---")
 
 # === FAQ Section ===
 st.subheader("Ask a Question")
-faq = st.text_area("Enter a question about Singapore SME grants, criteria, or your uploaded documents.")
-if faq:
-    with st.expander("📖 Ask a grant question"):
-        try:
-            res = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful and precise grant advisor for Singaporean SMEs."
-                    },
-                    {
-                        "role": "user",
-                        "content": faq
-                    }
-                ]
-            )
-            st.markdown(res.choices[0].message.content)
-        except openai.error.OpenAIError as e:
-            st.error(f"API error: {e}")
+
+faq = st.text_area("Enter a question about Singapore SME grants, criteria, or your uploaded documents:")
+
+if st.button("Submit FAQ"):
+    if not faq.strip():
+        st.warning("Please enter a question before submitting.")
+    else:
+        with st.spinner("Thinking..."):
+            try:
+                res = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful and precise grant advisor for Singaporean SMEs."
+                        },
+                        {
+                            "role": "user",
+                            "content": faq
+                        }
+                    ]
+                )
+                st.markdown("### 💬 Answer")
+                st.markdown(res.choices[0].message.content)
+            except Exception as e:
+                st.error(f"API error: {e}")
+else:
+    st.info("Type your question above and click 'Submit FAQ' to get a response.")
 
 st.markdown("---")
+
 
 # === Feedback Section ===
 st.subheader("Feedback")
