@@ -184,10 +184,10 @@ Be comprehensive and consider these grants (include others if relevant):
 - Violations: {"Yes" if violations else "No"}
 
 Return your response in **markdown format** with the following:
-1. ✅ **Eligible Grants** — List all relevant grants and why they apply
-2. ❗ **Missing Criteria or Risks** — Gaps that might disqualify the SME
-3. 📂 **Suggested Documents** — What documents or evidence to prepare
-4. 💡 **Additional Recommendations** — Any actions to strengthen application
+1.  **Eligible Grants** — List all relevant grants and why they apply
+2.  **Missing Criteria or Risks** — Gaps that might disqualify the SME
+3.  **Suggested Documents** — What documents or evidence to prepare
+4.  **Additional Recommendations** — Any actions to strengthen application
 """
             response = client.chat.completions.create(
                 model="gpt-4o",
