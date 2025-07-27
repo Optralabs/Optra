@@ -220,8 +220,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === Main UI Content ===
-st.title("Singapore SME Grant Eligibility Checker")
-st.caption("Discover what grants you may qualify for — and what to prepare.")
+st.title("Optra Document Analysis")
+st.caption("Upload your grant application documents here to understand how and what to improve to strengthen your application. ")
 st.markdown("---")
 
 uploaded_file = st.file_uploader("Upload your grant application PDF", type=["pdf"])
