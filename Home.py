@@ -139,21 +139,152 @@ def extract_data_from_text(text):
 
 st.markdown("---")
 
-# === About Your Business ===
+import streamlit as st
+import re
+
+# Helper function to validate numeric inputs
+def validate_numeric_input(value, field_name):
+    if value.strip() == "":
+        return None
+    try:
+        num = float(value.replace(',', ''))
+        if num < 0:
+            st.warning(f"{field_name} cannot be negative.")
+            return None
+        return num
+    except ValueError:
+        st.warning(f"Please enter a valid number for {field_name}.")
+        return None
+
+# Industry options (expand as needed)
+industry_options = [
+    "Retail",
+    "Food & Beverage",
+    "Technology",
+    "Manufacturing",
+    "Education",
+    "Healthcare",
+    "Professional Services",
+    "Logistics",
+    "Construction",
+    "Others"
+]
+
+business_stage_options = [
+    "Startup (Less than 1 year)",
+    "Early Stage (1-3 years)",
+    "Established (3-10 years)",
+    "Scaling / Expansion (>10 years)"
+]
+
+digital_adoption_options = [
+    "None",
+    "Basic digital tools (email, spreadsheets)",
+    "Moderate digital tools (ERP, CRM)",
+    "Advanced automation or AI"
+]
+
+grant_goals = [
+    "Business Expansion",
+    "Technology Adoption / Digitalisation",
+    "Workforce Training & Skills Development",
+    "Sustainability / Green Initiatives",
+    "Market Expansion / Export",
+    "Product or Service Innovation",
+    "Cost Reduction / Productivity",
+    "Others"
+]
+
+# --- About Your Business ---
 st.markdown("### About Your Business")
 
-industry = st.text_input("Industry / Sector", value=auto_data.get("industry") or "")
-revenue = st.text_input("Annual Revenue (SGD)")
-employees = st.text_input("Number of Employees")
-years = st.text_input("Years in Operation")
-ownership = st.selectbox("Is Local Ownership ≥30%?", ["Yes", "No"], index=0)
-goal = st.text_input("What do you want to achieve with a grant? (e.g., digital transformation, market expansion, workforce training)")
+# Assume auto_data extracted from uploaded doc (you can integrate your extraction logic)
+auto_data = {}
 
-# === Workforce & Compliance Details ===
-st.markdown("### Workforce & Compliance Details (Optional but Recommended)")
-skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
-local_employees = st.text_input("Number of Local Employees")
-violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
+industry = st.selectbox(
+    "Industry / Sector",
+    options=industry_options,
+    index=industry_options.index(auto_data.get("industry")) if auto_data.get("industry") in industry_options else 0,
+    help="Select the primary industry or sector your business operates in."
+)
+
+revenue_input = st.text_input(
+    "Annual Revenue (SGD)",
+    value=str(auto_data.get("revenue", "")),
+    help="Enter your annual revenue in Singapore Dollars (e.g., 1500000)."
+)
+revenue = validate_numeric_input(revenue_input, "Annual Revenue")
+
+employees_input = st.text_input(
+    "Number of Employees",
+    value=str(auto_data.get("employees", "")),
+    help="Total number of full-time employees."
+)
+employees = validate_numeric_input(employees_input, "Number of Employees")
+
+years_input = st.text_input(
+    "Years in Operation",
+    value=str(auto_data.get("years", "")),
+    help="How many years has your business been operating?"
+)
+years = validate_numeric_input(years_input, "Years in Operation")
+
+business_stage = st.selectbox(
+    "Business Stage / Lifecycle",
+    options=business_stage_options,
+    help="Select the stage your business is currently at."
+)
+
+ownership = st.selectbox(
+    "Is Local Ownership ≥30%?",
+    options=["Yes", "No"],
+    index=0,
+    help="Local ownership percentage affects eligibility for some grants."
+)
+
+digital_adoption = st.selectbox(
+    "Level of Digital Adoption",
+    options=digital_adoption_options,
+    help="How advanced is your business in using digital or automation tools?"
+)
+
+goal = st.selectbox(
+    "Primary Grant Objective / Goal",
+    options=grant_goals,
+    index=0,
+    help="Choose the main goal you want to achieve with a grant."
+)
+
+additional_goal = st.text_area(
+    "Additional Details About Your Grant Goals (optional)",
+    help="Add any specific details to clarify your grant objectives."
+)
+
+# --- SFEC Specific Details (show only if ownership >=30%) ---
+if ownership == "Yes":
+    st.markdown("### SFEC Specific Details")
+
+    skills_levy_input = st.text_input(
+        "Skills Development Levy Paid Last Year (SGD)",
+        help="Amount of Skills Development Levy paid last year (for SFEC eligibility)."
+    )
+    skills_levy_paid = validate_numeric_input(skills_levy_input, "Skills Development Levy Paid")
+
+    local_employees_input = st.text_input(
+        "Number of Local Employees",
+        help="Number of employees who are Singapore citizens or PRs."
+    )
+    local_employees = validate_numeric_input(local_employees_input, "Number of Local Employees")
+
+    violations = st.checkbox(
+        "Any outstanding MOM or IRAS violations?",
+        value=False,
+        help="Outstanding violations can affect grant eligibility."
+    )
+else:
+    skills_levy_paid = None
+    local_employees = None
+    violations = False
 
 # === Check Eligibility ===
 if st.button("Check Eligibility"):
