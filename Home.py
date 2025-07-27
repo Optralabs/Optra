@@ -16,7 +16,7 @@ def generate_pdf(content: str) -> bytes:
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Garamond", size=11)
+    pdf.set_font("Times", size=11)
 
     cleaned_content = clean_text(content)  # clean first
 
