@@ -428,6 +428,8 @@ if st.button("Check Eligibility"):
     prompt_parts.append("3. Suggest how to qualify in the future.")
     prompt_parts.append("4. Provide checklist of documents to prepare.")
     prompt = "\n".join(prompt_parts)
+    
+use_dummy = False
 
     if use_dummy:
         response_text = """
