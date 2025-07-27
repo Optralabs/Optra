@@ -1,5 +1,7 @@
 import streamlit as st
 import openai
+from openai import OpenAI
+client = OpenAI()
 import os
 import requests
 import datetime
@@ -455,7 +457,7 @@ Your SME is aligned with digitalisation goals and has the necessary ownership an
 else:
     with st.spinner("Analyzing via OpenAI..."):
         try:
-            res = openai.ChatCompletion.create(
+            res = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a Smart Grant Advisor for Singapore SMEs."},
@@ -595,7 +597,7 @@ faq = st.text_area("Enter a question about Singapore SME grants, criteria, or yo
 if faq:
     with st.expander("📖 Ask a grant question"):
         try:
-            res = openai.ChatCompletion.create(
+            res = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {
