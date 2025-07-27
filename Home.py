@@ -396,14 +396,18 @@ if st.button("Check Eligibility"):
     prompt_parts.append("3. Suggest how to qualify in the future.")
     prompt_parts.append("4. Provide checklist of documents to prepare.")
     prompt = "\n".join(prompt_parts)
-    
+
 use_dummy = False  # Set to True for testing without calling OpenAI
 
-# Prompt: gather user input or construct prompt from form data
 prompt = st.text_area("Enter your business details or grant-related question:")
 
-if use_dummy:
-    response_text = """
+# Use session state to store response so it persists after rerun
+if "response_text" not in st.session_state:
+    st.session_state.response_text = ""
+
+if st.button("Check Eligibility"):
+    if use_dummy:
+        st.session_state.response_text = """
 ### ✅ Eligible Grants
 - Productivity Solutions Grant (PSG)
 
@@ -420,22 +424,30 @@ Your SME is aligned with digitalisation goals and has the necessary ownership an
 - **EDG**: Requires ≥2 years in operation and growth/innovation goals.
 - **SFEC**: Must meet S$750 levy + ≥3 local staff + no violations.
 """
-else:
-    with st.spinner("Analyzing via OpenAI..."):
-        try:
-            res = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are a Smart Grant Advisor for Singapore SMEs."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.6
-            )
-            response_text = res.choices[0].message.content
-        except Exception as e:
-            st.error(f"API error: {e}")
-            st.stop()
+    else:
+        with st.spinner("Analyzing via OpenAI..."):
+            try:
+                res = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "You are a Smart Grant Advisor for Singapore SMEs."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.6
+                )
+                st.session_state.response_text = res.choices[0].message.content
+            except Exception as e:
+                st.error(f"API error: {e}")
+                st.stop()
 
+if st.session_state.response_text:
+    st.success("✅ Results Ready")
+    st.markdown(st.session_state.response_text)
+    # Add your output preview and download buttons here if needed
+else:
+    st.info("Fill in the details and click 'Check Eligibility' to get results.")
+
+ 
 # Display results and download buttons
 st.success("✅ Results Ready")
 st.markdown(response_text)
