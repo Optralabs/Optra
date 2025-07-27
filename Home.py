@@ -116,8 +116,11 @@ def extract_data_from_text(text):
         data['industry'] = 'F&B'
     return data
 
+st.markdown("---")
+
 # === About Your Business ===
 st.markdown("### About Your Business")
+
 industry = st.text_input("Industry / Sector", value=auto_data.get("industry") or "")
 revenue = st.text_input("Annual Revenue (SGD)")
 employees = st.text_input("No. of Employees")
@@ -125,54 +128,19 @@ years = st.text_input("Years in Operation")
 ownership = st.selectbox("Is Local Ownership ≥30%?", ["Yes", "No"], index=0)
 goal = st.text_input("What do you want to achieve with a grant?")
 
-if st.button("Check Eligibility Based on Business Info"):
-    with st.spinner("Analyzing eligibility with OpenAI..."):
-        try:
-            eligibility_prompt = f"""
-You are a smart grant advisor for Singaporean SMEs.
-Based on the following inputs, assess which grants the business is likely eligible for (e.g. PSG, EDG) and explain why.
-
-### Business Info:
-- Industry: {industry}
-- Revenue: {revenue}
-- Employees: {employees}
-- Years in Operation: {years}
-- Local Ownership ≥30%: {ownership}
-- Business Goal: {goal}
-"""
-            res = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are a helpful and precise grant advisor for Singaporean SMEs."},
-                    {"role": "user", "content": eligibility_prompt}
-                ]
-            )
-            st.session_state.eligibility_response = res.choices[0].message.content
-            st.success("Eligibility results ready!")
-        except Exception as e:
-            st.error(f"OpenAI API error: {e}")
-
-if st.session_state.get("eligibility_response"):
-    st.markdown("### Eligibility Result")
-    st.markdown(st.session_state.eligibility_response)
-
-    pdf_bytes = generate_pdf(st.session_state.eligibility_response)
-    if pdf_bytes:
-        st.download_button("Download Eligibility as PDF", data=pdf_bytes, file_name="eligibility_report.pdf")
-
-# === SFEC Inputs ===
+# === SFEC Specific Details ===
 st.markdown("### SFEC Specific Details")
 skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
 local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
 
-# === Eligibility Check Button ===
+# === Check Eligibility (Combined Logic) ===
 if st.button("Check Eligibility"):
     with st.spinner("Analyzing eligibility with OpenAI..."):
         try:
-            prompt = f"""
+            eligibility_prompt = f"""
 You are a smart grant advisor for Singaporean SMEs.
-Based on the following inputs, assess which grants the business is likely eligible for (PSG, EDG, SFEC), and explain why in clear terms.
+Based on the following inputs, assess which grants the business is likely eligible for (PSG, EDG, SFEC) and explain why.
 
 ### Business Info:
 - Industry: {industry}
@@ -199,35 +167,31 @@ Return a markdown report with:
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a helpful and precise grant advisor for Singaporean SMEs."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": eligibility_prompt}
                 ]
             )
             st.session_state.response_text = response.choices[0].message.content
-            st.success("✅ Eligibility analysis complete.")
+            st.success("Eligibility analysis complete.")
         except Exception as e:
             st.error(f"OpenAI API error: {e}")
 
-# === PDF Export Section ===
+# === Display and Export Results ===
 if st.session_state.get("response_text"):
-    st.markdown("### 📋 Results")
+    st.markdown("### Eligibility Result")
     st.markdown(st.session_state.response_text)
-
-    # Download Buttons
-    st.markdown("#### 📁 Export Results")
-    st.text_area("Output Preview", value=st.session_state.response_text, height=300)
 
     pdf_bytes = generate_pdf(st.session_state.response_text)
     if pdf_bytes:
-        st.download_button("📄 Download as PDF", data=pdf_bytes, file_name="grant_eligibility.pdf")
-    st.download_button("📄 Download as Text", st.session_state.response_text, file_name="grant_recommendation.txt")
-else:
-    st.info("Fill in your business details and click 'Check Eligibility' to get results.")
+        st.download_button("Download as PDF", data=pdf_bytes, file_name="grant_eligibility.pdf")
 
+    st.download_button("Download as Text", st.session_state.response_text, file_name="grant_eligibility.txt")
+    st.text_area("Preview", value=st.session_state.response_text, height=300)
+
+# === Upload Supporting Business Document ===
 st.markdown("---")
-
-# === Optional Document Upload ===
 st.markdown("### Upload Supporting Business Document (Optional)")
 st.markdown("_We’ll analyze your uploaded document to tailor grant recommendations._")
+
 uploaded_file = st.file_uploader("Upload a PDF document (e.g. ACRA BizFile)", type=["pdf"])
 
 doc_summary = ""
@@ -262,12 +226,14 @@ Please:
                             {"role": "user", "content": prompt_doc}
                         ]
                     )
-                    st.markdown("### 🧾 Document Analysis")
+                    st.markdown("### Document Analysis")
                     st.markdown(doc_response.choices[0].message.content)
                 except Exception as e:
                     st.error(f"OpenAI API error during document analysis: {e}")
     except Exception as e:
         st.warning(f"Could not read PDF: {e}")
+
+
 
 st.markdown("---")
 
