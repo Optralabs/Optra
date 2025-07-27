@@ -125,6 +125,42 @@ years = st.text_input("Years in Operation")
 ownership = st.selectbox("Is Local Ownership ≥30%?", ["Yes", "No"], index=0)
 goal = st.text_input("What do you want to achieve with a grant?")
 
+if st.button("Check Eligibility Based on Business Info"):
+    with st.spinner("Analyzing eligibility with OpenAI..."):
+        try:
+            eligibility_prompt = f"""
+You are a smart grant advisor for Singaporean SMEs.
+Based on the following inputs, assess which grants the business is likely eligible for (e.g. PSG, EDG) and explain why.
+
+### Business Info:
+- Industry: {industry}
+- Revenue: {revenue}
+- Employees: {employees}
+- Years in Operation: {years}
+- Local Ownership ≥30%: {ownership}
+- Business Goal: {goal}
+"""
+            res = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a helpful and precise grant advisor for Singaporean SMEs."},
+                    {"role": "user", "content": eligibility_prompt}
+                ]
+            )
+            st.session_state.eligibility_response = res.choices[0].message.content
+            st.success("Eligibility results ready!")
+        except Exception as e:
+            st.error(f"OpenAI API error: {e}")
+
+if st.session_state.get("eligibility_response"):
+    st.markdown("### Eligibility Result")
+    st.markdown(st.session_state.eligibility_response)
+
+    pdf_bytes = generate_pdf(st.session_state.eligibility_response)
+    if pdf_bytes:
+        st.download_button("Download Eligibility as PDF", data=pdf_bytes, file_name="eligibility_report.pdf")
+
+
 # === Optional Document Upload ===
 st.markdown("### Upload Supporting Business Document (Optional)")
 st.markdown("_We’ll analyze your uploaded document to tailor grant recommendations._")
@@ -138,10 +174,10 @@ if uploaded_file:
         all_text = extract_text_from_pdf(uploaded_file)
         doc_summary = all_text[:2000]
         auto_data = extract_data_from_text(all_text)
-        st.success("✅ Document uploaded and analyzed.")
+        st.success("Document uploaded and analyzed.")
         st.text_area("Extracted Content (preview)", doc_summary, height=180)
 
-        if st.button("🧠 Run Document Analysis"):
+        if st.button("Run Document Analysis"):
             with st.spinner("Analyzing document with OpenAI..."):
                 try:
                     prompt_doc = f"""
@@ -178,9 +214,9 @@ local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
 
 # === Eligibility Check Button ===
-st.markdown("## 🧾 Grant Eligibility Checker")
+st.markdown("## Grant Eligibility Checker")
 
-if st.button("✅ Check Eligibility"):
+if st.button("Check Eligibility"):
     with st.spinner("Analyzing eligibility with OpenAI..."):
         try:
             prompt = f"""
