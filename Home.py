@@ -439,14 +439,6 @@ Your SME is aligned with digitalisation goals and has the necessary ownership an
             except Exception as e:
                 st.error(f"API error: {e}")
                 st.stop()
-
-if st.session_state.response_text:
-    st.success("✅ Results Ready")
-    st.markdown(st.session_state.response_text)
-    # Add your output preview and download buttons here if needed
-else:
-    st.info("Fill in the details and click 'Check Eligibility' to get results.")
-
  
 # Display results and download buttons
 if st.session_state.response_text:
