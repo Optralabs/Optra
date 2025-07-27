@@ -377,7 +377,6 @@ st.markdown("### SFEC Specific Details")
 skills_levy_paid = st.text_input("Skills Development Levy Paid Last Year (S$)")
 local_employees = st.text_input("Number of Local Employees")
 violations = st.checkbox("Any outstanding MOM or IRAS violations?", value=False)
-use_dummy = st.checkbox("Use Dummy Response Mode (no API calls)", value=True)
 
 if st.button("Check Eligibility"):
     try:
