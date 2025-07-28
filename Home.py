@@ -518,7 +518,7 @@ if st.button("Submit"):
             except Exception as e:
                 st.error(f"API error: {e}")
 else:
-    st.info("Type your question above and click 'Submit FAQ' to get a response.")
+    st.info("Type your question above and click 'Submit' to get a response.")
 
 st.markdown("---")
 
