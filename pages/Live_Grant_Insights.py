@@ -2,14 +2,19 @@ import streamlit as st
 import requests
 import datetime
 from bs4 import BeautifulSoup
-
-# Load and embed OPTRA logo
-# ----------------------------
 from PIL import Image
 import base64
 from io import BytesIO
 from typing import List, Dict
 
+# -----------------------
+# PAGE CONFIG
+# -----------------------
+st.set_page_config(page_title="Live Grant Insights", layout="wide")
+
+# -----------------------
+# Load and embed OPTRA logo
+# -----------------------
 def get_logo_base64(path, width=80):
     img = Image.open(path)
     img = img.resize((width, width), Image.Resampling.LANCZOS)
@@ -17,10 +22,8 @@ def get_logo_base64(path, width=80):
     img.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode()
 
-# Set your logo path
 logo_base64 = get_logo_base64("optra_logo_transparent.png")
 
-# Display logo and brand (only once)
 st.markdown(
     f"""
     <div style='display: flex; align-items: center; margin-bottom: 2rem;'>
@@ -33,96 +36,47 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ----------------------------
-# 🧩 OPTRA Sidebar Setup
-# ----------------------------
+# -----------------------
+# Global CSS
+# -----------------------
 st.markdown("""
     <style>
-        /* Force sidebar background to black */
         section[data-testid="stSidebar"] {
             background-color: #000000 !important;
         }
-        /* Sidebar text color */
-        section[data-testid="stSidebar"] .css-1v0mbdj, 
+        section[data-testid="stSidebar"] .css-1v0mbdj,
         section[data-testid="stSidebar"] .css-1wvsk6o {
             color: #ffffff !important;
         }
-        /* Optional spacing and styling tweaks */
-        .sidebar-content {
-            padding: 1.5rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-    <style>
         html, body, [data-testid="stAppViewContainer"] {
             background: linear-gradient(to bottom, #0a0a0a 0%, #0a0a0a 10%, #0d0f1c 30%, #0f111f 60%, #00011d 100%) !important;
             color: #ffffff;
         }
-        .block-container { background-color: rgba(0, 0, 0, 0) !important; }
-        input, textarea, select {
-            background-color: #111729 !important;
-            color: #ffffff !important;
-            border: 1px solid #2b3a5e !important;
-        }
-        ::placeholder { color: #888 !important; }
-        button[kind="primary"] {
-            background-color: #3e6ce2 !important;
-            color: white !important;
-            border-radius: 8px !important;
-        }
-        h1, h2, h3 {
-            text-shadow: 0 0 4px rgba(0,0,0,0.4);
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("Live Grant Insights")
-
-# Inject global custom CSS for LanX-style gradient + form elements
-st.markdown("""
-    <style>
-        /* Full-page gradient background */
-        html, body, [data-testid="stAppViewContainer"] {
-            background: linear-gradient(to bottom, #0a0a0a 0%, #0a0a0a 10%, #0d0f1c 30%, #0f111f 60%, #00011d 100%) !important;
-            color: #ffffff;
-        }
-
-        /* Remove extra white backgrounds in containers */
         .block-container {
             background-color: rgba(0, 0, 0, 0) !important;
         }
-
-        /* Text input, selectbox, textarea styling */
         input, textarea, select {
             background-color: #111729 !important;
             color: #ffffff !important;
             border: 1px solid #2b3a5e !important;
         }
-
-        /* Placeholder text color */
         ::placeholder {
             color: #888 !important;
         }
-
-        /* Button style */
         button[kind="primary"] {
             background-color: #3e6ce2 !important;
             color: white !important;
             border-radius: 8px !important;
         }
-
-        /* Optional: shadow box for main headings */
         h1, h2, h3 {
             text-shadow: 0 0 4px rgba(0,0,0,0.4);
         }
     </style>
+""", unsafe_allow_html=True)
 
 # -----------------------
-# PAGE CONFIG
+# Header
 # -----------------------
-st.set_page_config(page_title="Live Grant Insights", layout="wide")
 st.title("Live Grant Insights for Singapore SMEs")
 st.markdown("Real-time SME grant intelligence, customized for your business.")
 
@@ -141,7 +95,6 @@ with st.sidebar:
 # -----------------------
 @st.cache_data(ttl=1800)
 def fetch_grant_feed() -> List[Dict]:
-    # Simulate grants; replace with API scraper logic later
     return [
         {
             "name": "Productivity Solutions Grant (PSG)",
@@ -179,7 +132,7 @@ def fetch_grant_feed() -> List[Dict]:
 def display_filtered_grants(grants: List[Dict]):
     st.subheader("🔎 Matching Grants For You")
     for grant in grants:
-        if grant["match_score"] > 70:  # Only show grants likely to match user
+        if grant["match_score"] > 70:
             st.markdown(f"""
                 <div style='border:1px solid #2b3a5e; padding:1rem; border-radius:10px; margin-bottom:1rem;'>
                     <h4 style='margin-bottom:0.2rem;'>{grant['name']}</h4>
@@ -193,7 +146,7 @@ def display_filtered_grants(grants: List[Dict]):
 # PSG VENDOR LOOKUP
 # -----------------------
 @st.cache_data(ttl=3600)
-def fetch_psg_vendors():
+def fetch_psg_vendors() -> Dict[str, List[str]]:
     return {
         "Retail": ["Vend POS", "StoreHub", "Qashier"],
         "F&B": ["FoodZaps", "Oddle", "TabSquare"],
@@ -237,9 +190,9 @@ with st.expander("📚 Discover Government Grant Datasets"):
 # -----------------------
 display_filtered_grants(fetch_grant_feed())
 
-
-
+# -----------------------
 # 4. Quick Links Section
+# -----------------------
 st.divider()
 st.subheader(" Quick Grant Resources")
 st.markdown("""
@@ -250,6 +203,3 @@ st.markdown("""
 - [SkillsFuture Enterprise Credit (SFEC)](https://www.skillsfuture.gov.sg/sfec)
 - [Market Readiness Assistance (MRA)](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/market-readiness-assistance/overview)
 """)
-
-
-
