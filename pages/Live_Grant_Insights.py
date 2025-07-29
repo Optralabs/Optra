@@ -182,8 +182,7 @@ grants_data = get_mock_grant_data()
 for grant_type, items in grants_data.items():
     st.subheader(f" {grant_type}")
     for name, desc in items:
-        st.markdown(f"- **{name}**  
-  {desc}")
+        st.markdown(f"- **{name}**<br>{desc}", unsafe_allow_html=True)
 
 # 3. Dataset Discovery Section
 with st.expander(" Discover More Grant Datasets (via data.gov.sg)"):
