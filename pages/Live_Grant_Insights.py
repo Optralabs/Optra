@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 import base64
 from io import BytesIO
+from typing import List, Tuple
 
 def get_logo_base64(path, width=80):
     img = Image.open(path)
