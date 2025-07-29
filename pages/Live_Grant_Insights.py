@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 import base64
 from io import BytesIO
-from typing import List, Tuple
+from typing import List, Dict
 
 def get_logo_base64(path, width=80):
     img = Image.open(path)
@@ -118,81 +118,126 @@ st.markdown("""
             text-shadow: 0 0 4px rgba(0,0,0,0.4);
         }
     </style>
-""", unsafe_allow_html=True)
 
-# 1. Fetch PSG Vendors (Simulated with fallback)
-def fetch_psg_vendors() -> Tuple[List[Tuple[str, str]], str]:
-    url = "https://data.gov.sg/api/action/datastore_search"
-    params = {
-        "resource_id": "cfba37cc-fb01-42e1-bbf6-0aadeec6f0bd",  # Placeholder resource ID
-        "limit": 5
-    }
-    try:
-        res = requests.get(url, params=params, timeout=10)
-        res.raise_for_status()
-        records = res.json()["result"]["records"]
-        return [(rec["vendor_name"], rec.get("solution_name", "No description")) for rec in records], " PSG data fetched via API"
-    except Exception as e:
-        return [("Fallback Vendor", "Unable to fetch live data.")], f" Error fetching PSG data: {e}"
+# -----------------------
+# PAGE CONFIG
+# -----------------------
+st.set_page_config(page_title="Live Grant Insights", layout="wide")
+st.title("Live Grant Insights for Singapore SMEs")
+st.markdown("Real-time SME grant intelligence, customized for your business.")
 
-# 2. Mock other grant data (can later be linked to scrapers or APIs)
-def get_mock_grant_data():
+# -----------------------
+# SMART FILTERS
+# -----------------------
+with st.sidebar:
+    st.header("🔍 Smart Grant Filter")
+    sector = st.selectbox("Industry Sector", ["Retail", "Manufacturing", "F&B", "Tech", "Others"])
+    revenue = st.selectbox("Annual Revenue", ["< $500k", "$500k–$1M", "$1M–$5M", "> $5M"])
+    headcount = st.selectbox("Employee Count", ["< 10", "10–50", "51–100", "> 100"])
+    intent = st.multiselect("Business Goal", ["Go Digital", "Expand Overseas", "Upskill Staff", "Automate Ops"])
+
+# -----------------------
+# GRANT FEED (SIMULATED API)
+# -----------------------
+@st.cache_data(ttl=1800)
+def fetch_grant_feed() -> List[Dict]:
+    # Simulate grants; replace with API scraper logic later
+    return [
+        {
+            "name": "Productivity Solutions Grant (PSG)",
+            "desc": "Support for adoption of pre-approved digital solutions.",
+            "type": "Digitalisation",
+            "match_score": 92,
+            "link": "https://www.gobusiness.gov.sg/psg"
+        },
+        {
+            "name": "Enterprise Development Grant (EDG)",
+            "desc": "Helps companies upgrade capabilities, innovate or expand overseas.",
+            "type": "Growth/Innovation",
+            "match_score": 84,
+            "link": "https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/overview"
+        },
+        {
+            "name": "Market Readiness Assistance (MRA)",
+            "desc": "Supports overseas expansion through market entry, marketing, etc.",
+            "type": "International Expansion",
+            "match_score": 78,
+            "link": "https://www.enterprisesg.gov.sg/mra"
+        },
+        {
+            "name": "SkillsFuture Enterprise Credit (SFEC)",
+            "desc": "Additional funding for workforce transformation and job redesign.",
+            "type": "Workforce",
+            "match_score": 65,
+            "link": "https://www.skillsfuture.gov.sg/sfec"
+        }
+    ]
+
+# -----------------------
+# DISPLAY GRANTS BASED ON FILTERS
+# -----------------------
+def display_filtered_grants(grants: List[Dict]):
+    st.subheader("🔎 Matching Grants For You")
+    for grant in grants:
+        if grant["match_score"] > 70:  # Only show grants likely to match user
+            st.markdown(f"""
+                <div style='border:1px solid #2b3a5e; padding:1rem; border-radius:10px; margin-bottom:1rem;'>
+                    <h4 style='margin-bottom:0.2rem;'>{grant['name']}</h4>
+                    <p style='margin:0.3rem 0;'>{grant['desc']}</p>
+                    <p><b>Focus:</b> {grant['type']} | <b>Success Likelihood:</b> {grant['match_score']}%</p>
+                    <a href="{grant['link']}" target="_blank">🔗 View Details</a>
+                </div>
+            """, unsafe_allow_html=True)
+
+# -----------------------
+# PSG VENDOR LOOKUP
+# -----------------------
+@st.cache_data(ttl=3600)
+def fetch_psg_vendors():
     return {
-        "Enterprise Development Grant (EDG)": [
-            ("EDG Business Strategy", "Support for upgrading business strategies, innovation, productivity."),
-            ("EDG Market Access", "Helps expand overseas with expert consultancy and support.")
-        ],
-        "Startup SG Founder": [
-            ("Start-up Capital Grant", "Provides mentorship and startup capital to first-time founders."),
-        ],
-        "SkillsFuture Enterprise Credit (SFEC)": [
-            ("SFEC Training Subsidy", "Subsidies for employer-sponsored workforce upgrading."),
-        ],
-        "Market Readiness Assistance (MRA)": [
-            ("MRA Overseas Expansion", "Support for international market expansion activities.")
-        ]
+        "Retail": ["Vend POS", "StoreHub", "Qashier"],
+        "F&B": ["FoodZaps", "Oddle", "TabSquare"],
+        "Tech": ["Microsoft 365", "Xero", "Freshworks"],
+        "Others": ["Generic Vendor A", "Generic Vendor B"]
     }
 
-# 3. Optional Grant Dataset Discovery
-@st.cache_data
-def search_datasets(query="grant"):
+st.divider()
+st.subheader("⚙️ PSG Vendor Recommendations")
+psg_vendors = fetch_psg_vendors()
+if sector in psg_vendors:
+    for vendor in psg_vendors[sector]:
+        st.markdown(f"- ✅ {vendor}")
+else:
+    st.markdown("No sector-specific vendors found.")
+
+# -----------------------
+# BONUS: DATASET DISCOVERY
+# -----------------------
+@st.cache_data(ttl=86400)
+def discover_datasets(query="grant"):
     url = "https://data.gov.sg/api/action/package_search"
     try:
-        params = {"q": query}
-        res = requests.get(url, params=params)
+        res = requests.get(url, params={"q": query}, timeout=10)
         res.raise_for_status()
         data = res.json()["result"]["results"]
-        return [(d["title"], d["resources"][0]["url"]) for d in data[:5]]
+        return [(d["title"], d["resources"][0]["url"]) for d in data if d.get("resources")]
     except:
         return []
 
-# Streamlit App UI
-st.set_page_config(page_title="Live Grant Insights", layout="wide")
-st.title("Live Grant Insights for Singapore SMEs")
-st.markdown("Gain real-time access to SME grants across productivity, innovation, hiring and expansion.")
-
-# 1. PSG Vendors Section
-st.subheader("Productivity Solutions Grant (PSG)")
-psg_data, psg_status = fetch_psg_vendors()
-st.caption(psg_status)
-for vendor, desc in psg_data:
-    st.markdown(f"- **{vendor}**: {desc}")
-
-# 2. Other Grants Section
-grants_data = get_mock_grant_data()
-for grant_type, items in grants_data.items():
-    st.subheader(f" {grant_type}")
-    for name, desc in items:
-        st.markdown(f"- **{name}**<br>{desc}", unsafe_allow_html=True)
-
-# 3. Dataset Discovery Section
-with st.expander(" Discover More Grant Datasets (via data.gov.sg)"):
-    dataset_results = search_datasets()
-    if dataset_results:
-        for title, link in dataset_results:
+with st.expander("📚 Discover Government Grant Datasets"):
+    datasets = discover_datasets()
+    if datasets:
+        for title, link in datasets:
             st.markdown(f"- [{title}]({link})")
     else:
-        st.write("No datasets found or API error.")
+        st.write("No datasets available or API error.")
+
+# -----------------------
+# Render Final Grant Feed
+# -----------------------
+display_filtered_grants(fetch_grant_feed())
+
+
 
 # 4. Quick Links Section
 st.divider()
