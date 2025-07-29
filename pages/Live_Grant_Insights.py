@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 from PIL import Image
 import base64
 from io import BytesIO
-import streamlit as st
 
 def get_logo_base64(path, width=80):
     img = Image.open(path)
@@ -78,7 +77,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Live Grant Scraper")
+st.title("Live Grant Insights")
 
 # Inject global custom CSS for LanX-style gradient + form elements
 st.markdown("""
@@ -120,79 +119,92 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-# Cache with TTL removed, because we want manual control now
-
-def fetch_psg_solutions():
-    fallback = [("eCommerce Solutions", "Tools for online selling."),
-                ("Cybersecurity Tools", "Packages for small biz protection."),
-                ("Accounting Systems", "Automate invoicing and expenses.")]
+# 1. Fetch PSG Vendors (Simulated with fallback)
+def fetch_psg_vendors() -> Tuple[List[Tuple[str, str]], str]:
+    url = "https://data.gov.sg/api/action/datastore_search"
+    params = {
+        "resource_id": "cfba37cc-fb01-42e1-bbf6-0aadeec6f0bd",  # Placeholder resource ID
+        "limit": 5
+    }
     try:
-        url = "https://www.gobusiness.gov.sg/productivity-solutions-grant/solutions/"
-        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        if res.status_code != 200:
-            return fallback, "Fallback (bad response)", datetime.datetime.now()
-        soup = BeautifulSoup(res.text, "html.parser")
-        cards = soup.select(".solution-card")
-        data = [(c.select_one(".solution-name").text.strip(), c.select_one(".solution-description").text.strip()) for c in cards[:5]]
-        return data or fallback, "Live scrape successful", datetime.datetime.now()
-    except:
-        return fallback, "Fallback (error)", datetime.datetime.now()
+        res = requests.get(url, params=params, timeout=10)
+        res.raise_for_status()
+        records = res.json()["result"]["records"]
+        return [(rec["vendor_name"], rec.get("solution_name", "No description")) for rec in records], " PSG data fetched via API"
+    except Exception as e:
+        return [("Fallback Vendor", "Unable to fetch live data.")], f" Error fetching PSG data: {e}"
 
-def fetch_edg_headlines():
-    fallback = [("Strategic Brand & Marketing Development", ""), ("Overseas Expansion Planning", "")]
+# 2. Mock other grant data (can later be linked to scrapers or APIs)
+def get_mock_grant_data():
+    return {
+        "Enterprise Development Grant (EDG)": [
+            ("EDG Business Strategy", "Support for upgrading business strategies, innovation, productivity."),
+            ("EDG Market Access", "Helps expand overseas with expert consultancy and support.")
+        ],
+        "Startup SG Founder": [
+            ("Start-up Capital Grant", "Provides mentorship and startup capital to first-time founders."),
+        ],
+        "SkillsFuture Enterprise Credit (SFEC)": [
+            ("SFEC Training Subsidy", "Subsidies for employer-sponsored workforce upgrading."),
+        ],
+        "Market Readiness Assistance (MRA)": [
+            ("MRA Overseas Expansion", "Support for international market expansion activities.")
+        ]
+    }
+
+# 3. Optional Grant Dataset Discovery
+@st.cache_data
+def search_datasets(query="grant"):
+    url = "https://data.gov.sg/api/action/package_search"
     try:
-        url = "https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/enterprise-development-grant/overview"
-        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        if res.status_code != 200:
-            return fallback, "Fallback (bad response)", datetime.datetime.now()
-        soup = BeautifulSoup(res.text, "html.parser")
-        headers = soup.select("h2, h3")
-        results = [(h.text.strip(), "") for h in headers if len(h.text.strip()) > 4]
-        return results[:5], "Live scrape successful", datetime.datetime.now()
+        params = {"q": query}
+        res = requests.get(url, params=params)
+        res.raise_for_status()
+        data = res.json()["result"]["results"]
+        return [(d["title"], d["resources"][0]["url"]) for d in data[:5]]
     except:
-        return fallback, "Fallback (error)", datetime.datetime.now()
+        return []
 
-if "psg_data" not in st.session_state:
-    st.session_state.psg_data = None
-if "psg_status" not in st.session_state:
-    st.session_state.psg_status = None
-if "psg_time" not in st.session_state:
-    st.session_state.psg_time = None
+# Streamlit App UI
+st.set_page_config(page_title="Live Grant Insights", layout="wide")
+st.title("Live Grant Insights for Singapore SMEs")
+st.markdown("Gain real-time access to SME grants across productivity, innovation, hiring and expansion.")
 
-if "edg_data" not in st.session_state:
-    st.session_state.edg_data = None
-if "edg_status" not in st.session_state:
-    st.session_state.edg_status = None
-if "edg_time" not in st.session_state:
-    st.session_state.edg_time = None
+# 1. PSG Vendors Section
+st.subheader("Productivity Solutions Grant (PSG)")
+psg_data, psg_status = fetch_psg_vendors()
+st.caption(psg_status)
+for vendor, desc in psg_data:
+    st.markdown(f"- **{vendor}**: {desc}")
 
-if st.button("Run Grant Scraper"):
-    with st.spinner("Scraping PSG Solutions..."):
-        psg_data, psg_status, psg_time = fetch_psg_solutions()
-        st.session_state.psg_data = psg_data
-        st.session_state.psg_status = psg_status
-        st.session_state.psg_time = psg_time
+# 2. Other Grants Section
+grants_data = get_mock_grant_data()
+for grant_type, items in grants_data.items():
+    st.subheader(f" {grant_type}")
+    for name, desc in items:
+        st.markdown(f"- **{name}**  
+  {desc}")
 
-    with st.spinner("Scraping EDG Headlines..."):
-        edg_data, edg_status, edg_time = fetch_edg_headlines()
-        st.session_state.edg_data = edg_data
-        st.session_state.edg_status = edg_status
-        st.session_state.edg_time = edg_time
+# 3. Dataset Discovery Section
+with st.expander(" Discover More Grant Datasets (via data.gov.sg)"):
+    dataset_results = search_datasets()
+    if dataset_results:
+        for title, link in dataset_results:
+            st.markdown(f"- [{title}]({link})")
+    else:
+        st.write("No datasets found or API error.")
 
-if st.session_state.psg_data:
-    st.header("Productivity Solutions Grant (PSG)")
-    st.markdown(f"**Last updated:** {st.session_state.psg_time.strftime('%Y-%m-%d %H:%M')} — {st.session_state.psg_status}")
-    for title, desc in st.session_state.psg_data:
-        st.markdown(f"- **{title}**\n  {desc}")
+# 4. Quick Links Section
+st.divider()
+st.subheader(" Quick Grant Resources")
+st.markdown("""
+- [GoBusiness Grant Navigator](https://www.gobusiness.gov.sg/gov-assist/grants/)
+- [EnterpriseSG Financial Assistance Directory](https://www.enterprisesg.gov.sg/financial-assistance)
+- [PSG Pre-approved Solutions](https://www.gobusiness.gov.sg/productivity-solutions-grant/solutions/)
+- [Startup SG](https://www.startupsg.gov.sg/)
+- [SkillsFuture Enterprise Credit (SFEC)](https://www.skillsfuture.gov.sg/sfec)
+- [Market Readiness Assistance (MRA)](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/market-readiness-assistance/overview)
+""")
 
-if st.session_state.edg_data:
-    st.header("Enterprise Development Grant (EDG)")
-    st.markdown(f"**Last updated:** {st.session_state.edg_time.strftime('%Y-%m-%d %H:%M')} — {st.session_state.edg_status}")
-    for title, desc in st.session_state.edg_data:
-        st.markdown(f"- **{title}**\n  {desc}")
-
-if not (st.session_state.psg_data or st.session_state.edg_data):
-    st.info("Click the button above to start scraping live grant data.")
 
 
