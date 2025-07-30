@@ -6,8 +6,10 @@ from typing import List, Tuple, Dict
 from datetime import datetime
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
-from utils.grant_scoring import score_grant_match
-from utils.grant_data import fetch_sample_grants
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from utils.grant_database import get_all_grants
 
 # ======= Securely get OpenAI key from Streamlit secrets =======
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -83,77 +85,148 @@ st.set_page_config(page_title="Live Grant Insights", layout="wide")
 st.title("Live Grant Insights")
 st.markdown("Stay ahead with actionable recommendations tailored to your business.")
 
-# Simulated user inputs (replace these with session state or inputs later)
-sector = st.session_state.get("sector", "Retail")
-revenue = st.session_state.get("revenue", 500000)
-staff_count = st.session_state.get("staff_count", 10)
-goal = st.session_state.get("goal", "Expand operations")
+# ========== Grant Scoring ==========
+def score_grant_match(grant, sector, revenue, staff_count, goal):
+    score = 0
+    reasons = []
 
-# === GPT: Application Readiness Checklist ===
-def get_readiness_checklist(grant_name, grant_type, sector):
-    prompt = f"""
-    You are a government grants consultant in Singapore. The SME is considering applying for a grant called '{grant_name}' which is a '{grant_type}' type of grant. 
-    The business is in the '{sector}' sector. 
+    # Sector check
+    if grant['sectors']:
+        if sector and sector.lower() in [s.lower() for s in grant['sectors']]:
+            score += 25
+            reasons.append("✔️ Sector is eligible.")
+        else:
+            reasons.append("❌ Sector mismatch.")
+    else:
+        # No sector restriction = partial credit
+        score += 10
+        reasons.append("ℹ️ No sector restriction.")
 
-    Provide a checklist (3-6 items max) of documents or preparation steps this SME must complete before applying. 
-    Each item should be short and specific.
-    """
+    # Revenue check
+    max_revenue = grant.get('max_revenue')
+    if max_revenue is not None:
+        if revenue <= max_revenue:
+            score += 25
+            reasons.append(f"✔️ Revenue ≤ ${max_revenue:,}.")
+        else:
+            reasons.append(f"❌ Revenue > ${max_revenue:,}.")
+    else:
+        score += 10
+        reasons.append("ℹ️ No revenue cap.")
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful SME grant consultant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.4,
-        )
-        checklist_text = response['choices'][0]['message']['content']
-        return checklist_text
-    except Exception as e:
-        return f"Could not generate checklist: {e}"
+    # Staff check
+    max_staff = grant.get('max_staff')
+    if max_staff is not None:
+        if staff_count <= max_staff:
+            score += 25
+            reasons.append(f"✔️ Staff count ≤ {max_staff}.")
+        else:
+            reasons.append(f"❌ Staff count > {max_staff}.")
+    else:
+        score += 10
+        reasons.append("ℹ️ No staff cap.")
 
-# === Custom Progress Bar ===
-def custom_progress_bar(score: float):
-    score = max(0, min(score, 100))
-    percent = int(score)
-    bar_color = "#2F49F4"
-    bg_color = "#0B0E28"
+    # Business goal check
+    if goal:
+        if goal.lower() in [g.lower() for g in grant['supported_goals']]:
+            score += 25
+            reasons.append("✔️ Business goal aligns.")
+        else:
+            reasons.append("❌ Business goal does not align.")
+    else:
+        reasons.append("ℹ️ No business goal specified.")
 
-    bar_html = f"""
-    <div style="width: 100%; background-color: {bg_color}; border-radius: 10px; padding: 3px;">
-        <div style="
-            width: {percent}%;
-            background-color: {bar_color};
-            height: 20px;
-            border-radius: 7px;
-            transition: width 0.4s ease-in-out;">
-        </div>
-    </div>
-    <p style="color: #F5F5F5; font-size: 16px; margin-top: 6px;">Eligibility Score: {percent}%</p>
-    """
-    components.html(bar_html, height=60)
+    return min(score, 100), reasons
 
-# === Grant Matching Results ===
-grants = fetch_sample_grants()
-for grant in grants:
-    score, summary = score_grant_match(grant, sector, revenue, staff_count, goal)
+# ========== PDF Report Generator ==========
+def generate_pdf(sector, revenue, staff_count, goal, matches):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    y = height - 50
 
-    with stylable_container(key=f"grant_{grant['name']}", css_styles="""
-        border: 1px solid #DDD;
-        padding: 1em;
-        border-radius: 12px;
-        margin-bottom: 1.5em;
-        background-color: #ffffff0a;
-    """):
-        st.markdown(f"### **{grant['name']}**")
-        st.markdown(f"*Type:* {grant['type']} | [View Grant Info]({grant['link']})")
-        st.markdown(f"**Why it matches:** {summary}")
-        custom_progress_bar(score)
+    pdf.setTitle("Grant Match Report")
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(50, y, "Grant Match Report")
+    y -= 40
 
-        with st.expander("Application Readiness Checklist"):
-            checklist = get_readiness_checklist(grant['name'], grant['type'], sector)
-            st.markdown(checklist)
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(50, y, f"Business Sector: {sector}")
+    y -= 20
+    pdf.drawString(50, y, f"Annual Revenue: SGD {revenue:,.2f}")
+    y -= 20
+    pdf.drawString(50, y, f"Staff Count: {staff_count}")
+    y -= 20
+    pdf.drawString(50, y, f"Business Goal: {goal}")
+    y -= 30
+
+    for match in matches:
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(50, y, f"{match['Grant']} — {match['Score']}% Match")
+        y -= 25
+
+        pdf.setFont("Helvetica", 11)
+        for reason in match['Reasons'].split("\n"):
+            pdf.drawString(60, y, f"- {reason.strip()}")
+            y -= 15
+
+            if y < 60:
+                pdf.showPage()
+                y = height - 50
+
+        y -= 20
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+# ========== Streamlit UI ==========
+st.title("📊 Live Grant Insights")
+st.markdown("Get real-time insights into which grants best match your business profile.")
+
+with st.form("sme_form"):
+    st.subheader("Your SME Details")
+    sector = st.text_input("Sector (e.g., retail, f&b, logistics)").strip()
+    revenue = st.number_input("Annual Revenue (SGD)", min_value=0, step=10000)
+    staff_count = st.number_input("Full-Time Staff Count", min_value=0, step=1)
+    goal = st.text_input("Business Goal (e.g., automation, expansion)").strip()
+    submitted = st.form_submit_button("Analyze Grants")
+
+if submitted:
+    st.markdown("---")
+    st.subheader("🎯 Matching Grants")
+    grants = get_all_grants()
+    matches = []
+
+    for grant in grants:
+        score, reasons = score_grant_match(grant, sector, revenue, staff_count, goal)
+        clamped_score = max(0, min(100, int(score)))
+
+        with stylable_container(key=grant['name'], css_styles="border:1px solid #ccc; padding:1em; border-radius:10px; margin-bottom:1em;"):
+            st.markdown(f"### [{grant['name']}]({grant['link']})")
+            st.markdown(f"*Type:* {grant['type']}")
+            components.html(f"""
+                <div style='background:#0B0E28; border-radius:10px; padding:5px;'>
+                    <div style='width:{clamped_score}%; background:#2F49F4; height:20px; border-radius:7px;'></div>
+                </div>
+                <p style='color:#F5F5F5; font-size:16px; margin-top:6px;'>Eligibility Score: {clamped_score}%</p>
+            """, height=60)
+            st.markdown("**Rationale:**")
+            for reason in reasons:
+                st.markdown(f"- {reason}")
+            matches.append({
+                "Grant": grant["name"],
+                "Score": clamped_score,
+                "Reasons": "\n".join(reasons),
+                "Link": grant["link"]
+            })
+
+    # PDF Download
+    if matches:
+        st.markdown("#### 📄 Downloadable PDF Report")
+        if st.button("Generate PDF Report"):
+            pdf_file = generate_pdf(sector, revenue, staff_count, goal, matches)
+            st.download_button("📥 Download Report", data=pdf_file, file_name="Grant_Report.pdf", mime="application/pdf")
 
 # ========== Quick Links Always Visible ==========
 st.markdown("---")
