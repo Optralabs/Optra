@@ -1,9 +1,10 @@
 import streamlit as st
 import requests
-import datetime
 from bs4 import BeautifulSoup
-from typing import List, Dict
 import openai
+from typing import List, Tuple, Dict
+from datetime import datetime
+from streamlit_extras.stylable_container import stylable_container
 
 # ======= Securely get OpenAI key from Streamlit secrets =======
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -74,210 +75,98 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ========== Page Config ==========
 st.set_page_config(page_title="Live Grant Insights", layout="wide")
-st.title("Live Grant Insights for Singapore SMEs")
-st.markdown("Real-time SME grant intelligence, customized for your business.")
+st.title("Live Grant Insights")
 
-# ======= Sidebar filters for user input =======
-with st.sidebar:
-    st.header("🔍 Smart Grant Filter")
-    sector = st.selectbox("Industry Sector", ["Retail", "Manufacturing", "F&B", "Tech", "Others"])
-    revenue = st.selectbox("Annual Revenue", ["< $500k", "$500k–$1M", "$1M–$5M", "> $5M"])
-    headcount = st.selectbox("Employee Count", ["< 10", "10–50", "51–100", "> 100"])
-    intent = st.multiselect("Business Goal", ["Go Digital", "Expand Overseas", "Upskill Staff", "Automate Ops"])
+# ========== Sidebar or Top Filter Section ==========
+st.markdown("### Tell us about your business")
 
-# ======= Fetch grants dynamically from a public source (example: gov.sg datasets) =======
+with st.form("business_profile_form"):
+    col1, col2 = st.columns(2)
+
+    with col1:
+        biz_name = st.text_input("Business Name")
+        sector = st.selectbox("Sector", ["Retail", "F&B", "Manufacturing", "Professional Services", "Logistics", "Healthcare", "Other"])
+        revenue = st.selectbox("Annual Revenue", ["< S$100k", "S$100k - S$500k", "S$500k - S$1M", "> S$1M"])
+
+    with col2:
+        staff_count = st.selectbox("Number of Employees", ["1-5", "6-20", "21-50", "> 50"])
+        goal = st.selectbox("Main Business Goal", [
+            "Digitalisation", "Overseas Expansion", "Product Development",
+            "Automation", "Sustainability", "Training & Capability Building"
+        ])
+        submitted = st.form_submit_button("Show Grant Insights")
+
+# ========== Cache Grant Fetching Functions ========== 
 @st.cache_data(ttl=3600)
-def fetch_live_grants() -> List[Dict]:
-    # Example: Fetch list of grants from data.gov.sg or mock public API
-    # For demo, static mock data simulates live fetch.
-    # Replace this with your actual API/scraper fetching logic.
-    grants = [
-        {
-            "name": "Productivity Solutions Grant (PSG)",
-            "desc": "Supports adoption of IT solutions and equipment to enhance business processes.",
-            "type": "Digitalisation",
-            "url": "https://www.gobusiness.gov.sg/psg",
-            "tags": ["Go Digital", "Automate Ops"],
-            "sector": ["Retail", "Manufacturing", "F&B", "Tech", "Others"],
-            "min_revenue": "< $5M",
-            "max_revenue": "> $0",
-            "min_headcount": "< 100",
-        },
-        {
-            "name": "Enterprise Development Grant (EDG)",
-            "desc": "Supports projects that help upgrade business capabilities, innovate, and expand overseas.",
-            "type": "Growth/Innovation",
-            "url": "https://www.enterprisesg.gov.sg/financial-assistance/grants/enterprise-development-grant",
-            "tags": ["Expand Overseas", "Go Digital"],
-            "sector": ["Retail", "Manufacturing", "F&B", "Tech", "Others"],
-            "min_revenue": "$500k–$1M",
-            "max_revenue": "> $0",
-            "min_headcount": "10–50",
-        },
-        {
-            "name": "Market Readiness Assistance (MRA)",
-            "desc": "Supports overseas market expansion including market set-up and identification.",
-            "type": "International Expansion",
-            "url": "https://www.enterprisesg.gov.sg/mra",
-            "tags": ["Expand Overseas"],
-            "sector": ["Retail", "Manufacturing", "F&B", "Tech", "Others"],
-            "min_revenue": "$1M–$5M",
-            "max_revenue": "> $0",
-            "min_headcount": "10–50",
-        },
-        {
-            "name": "SkillsFuture Enterprise Credit (SFEC)",
-            "desc": "Encourages employers to invest in workforce skills and transformation.",
-            "type": "Workforce",
-            "url": "https://www.skillsfuture.gov.sg/sfec",
-            "tags": ["Upskill Staff"],
-            "sector": ["Retail", "Manufacturing", "F&B", "Tech", "Others"],
-            "min_revenue": "< $5M",
-            "max_revenue": "> $0",
-            "min_headcount": "< 100",
-        }
+def fetch_sample_grants() -> List[Dict]:
+    """ Placeholder for live scraping or API fetch. Replace this with real data.gov.sg or ESG API."""
+    return [
+        {"name": "Productivity Solutions Grant (PSG)", "summary": "Support for digital tools and equipment.", "type": "Digitalisation", "link": "https://www.gobusiness.gov.sg/grants/psg"},
+        {"name": "Enterprise Development Grant (EDG)", "summary": "Help companies grow and transform.", "type": "Capability Building", "link": "https://www.gobusiness.gov.sg/grants/edg"},
+        {"name": "Market Readiness Assistance (MRA)", "summary": "Support for international expansion.", "type": "Overseas Expansion", "link": "https://www.gobusiness.gov.sg/grants/mra"},
     ]
-    return grants
 
-# ======= Eligibility scoring prompt for GPT =======
-def generate_eligibility_prompt(grant: Dict, user_data: Dict) -> str:
+# ========== GPT-Powered Grant Matching ========== 
+@st.cache_data(show_spinner=False)
+def score_grant_match(grant: Dict, sector: str, revenue: str, staff_count: str, goal: str) -> Tuple[int, str]:
+    from openai import OpenAI
+    import os
+    
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+    
     prompt = f"""
-You are an expert SME grants consultant. Given the following grant information and user business profile, evaluate the eligibility and match score (0-100) and provide a short justification.
+    You are a Singapore grant consultant. A business in the {sector} sector with {staff_count} employees and {revenue} annual revenue wants to pursue {goal}. Evaluate if they qualify for the following grant:
 
-Grant:
-Name: {grant['name']}
-Description: {grant['desc']}
-Type: {grant['type']}
-Applicable sectors: {', '.join(grant.get('sector', []))}
-Business size constraints: Revenue {grant.get('min_revenue')} to {grant.get('max_revenue')}, Headcount min {grant.get('min_headcount')}
+    Grant Name: {grant['name']}
+    Summary: {grant['summary']}
 
-User Business Profile:
-Sector: {user_data['sector']}
-Revenue: {user_data['revenue']}
-Headcount: {user_data['headcount']}
-Business Goals: {', '.join(user_data['intent'])}
+    Score the match out of 100. Also provide a 1-paragraph justification.
+    """
 
-Answer in JSON format with keys: "match_score" (0-100), "justification" (string).
-"""
-    return prompt.strip()
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3
+    )
 
-# ======= Call OpenAI GPT to evaluate eligibility and generate advice =======
-@st.cache_data(ttl=900)
-def gpt_evaluate_grant(grant: Dict, user_data: Dict) -> Dict:
-    prompt = generate_eligibility_prompt(grant, user_data)
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            max_tokens=200,
-        )
-        content = response.choices[0].message.content.strip()
-        # Expecting JSON response
-        import json
-        result = json.loads(content)
-        # Ensure keys exist and correct types
-        match_score = int(result.get("match_score", 0))
-        justification = result.get("justification", "")
-        return {"match_score": match_score, "justification": justification}
-    except Exception as e:
-        # Fail gracefully with zero score and error justification
-        return {"match_score": 0, "justification": f"Error evaluating eligibility: {e}"}
+    raw = response.choices[0].message.content
+    score_line = next((line for line in raw.split("\n") if any(char.isdigit() for char in line)), "")
+    score = int(''.join(filter(str.isdigit, score_line))) if score_line else 50
+    return score, raw.strip()
 
-# ======= Filter grants by user input & get GPT-based scoring =======
-def filter_and_score_grants(grants: List[Dict], user_data: Dict) -> List[Dict]:
-    filtered = []
+# ========== Grant Results ========== 
+if submitted:
+    st.markdown("---")
+    st.subheader("Matched Grants for You")
+
+    grants = fetch_sample_grants()
+
     for grant in grants:
-        # Quick filter by sector
-        if user_data['sector'] not in grant['sector']:
-            continue
-        # Revenue and headcount are strings like "< $500k", "10-50", so naive filtering below:
-        # (Could be improved to numeric ranges if you want)
-        # For demo, just allow all; GPT scoring will refine the fit
-        score_data = gpt_evaluate_grant(grant, user_data)
-        if score_data["match_score"] > 40:  # Threshold for display
-            combined = grant.copy()
-            combined.update(score_data)
-            filtered.append(combined)
-    # Sort descending by match score
-    return sorted(filtered, key=lambda x: x["match_score"], reverse=True)
+        score, summary = score_grant_match(grant, sector, revenue, staff_count, goal)
+        with stylable_container(key=f"grant_{grant['name']}", css_styles="border:1px solid #DDD; padding:1em; border-radius:12px; margin-bottom: 1em"):
+            st.markdown(f"**{grant['name']}** — *{grant['type']}*")
+            st.markdown(f" [View Grant Info]({grant['link']})")
+            st.progress(score / 100)
+            st.markdown(f"**Score:** {score}/100")
+            st.markdown(f"**Analysis:** {summary}")
 
-# ======= PSG Vendor Recommendations (simple static) =======
-@st.cache_data(ttl=3600)
-def fetch_psg_vendors():
-    return {
-        "Retail": ["Vend POS", "StoreHub", "Qashier"],
-        "F&B": ["FoodZaps", "Oddle", "TabSquare"],
-        "Tech": ["Microsoft 365", "Xero", "Freshworks"],
-        "Others": ["Generic Vendor A", "Generic Vendor B"]
-    }
-
-# ======= Main app rendering =======
-st.divider()
-st.subheader("PSG Vendor Recommendations")
-psg_vendors = fetch_psg_vendors()
-if sector in psg_vendors:
-    for vendor in psg_vendors[sector]:
-        st.markdown(f"- {vendor}")
-else:
-    st.markdown("No sector-specific vendors found.")
-
-st.divider()
-st.subheader("Matching Grants For You")
-
-user_profile = {
-    "sector": sector,
-    "revenue": revenue,
-    "headcount": headcount,
-    "intent": intent,
+# ========== Quick Links Always Visible ==========
+st.markdown("---")
+st.subheader("Quick Links & Grant Resources")
+quick_links = {
+    "Productivity Solutions Grant (PSG)": "https://www.gobusiness.gov.sg/grants/psg",
+    "Enterprise Development Grant (EDG)": "https://www.gobusiness.gov.sg/grants/edg",
+    "Market Readiness Assistance (MRA)": "https://www.gobusiness.gov.sg/grants/mra",
+    "Startup SG": "https://www.startupsg.gov.sg/",
+    "SkillsFuture Enterprise Credit (SFEC)": "https://www.gobusiness.gov.sg/grants/sfec",
+    "GoBusiness Gov Assist Portal": "https://www.gobusiness.gov.sg/grant-assist"
 }
 
-live_grants = fetch_live_grants()
-scored_grants = filter_and_score_grants(live_grants, user_profile)
+cols = st.columns(3)
+for i, (title, link) in enumerate(quick_links.items()):
+    with cols[i % 3]:
+        st.markdown(f"[{title}]({link})")
 
-if not scored_grants:
-    st.info("No matching grants found based on your profile and GPT eligibility scoring.")
-else:
-    for grant in scored_grants:
-        st.markdown(f"""
-            <div style='border:1px solid #2b3a5e; padding:1rem; border-radius:10px; margin-bottom:1rem;'>
-                <h4 style='margin-bottom:0.2rem;'>{grant['name']} ({grant['match_score']}%)</h4>
-                <p style='margin:0.3rem 0;'>{grant['desc']}</p>
-                <p><b>Focus:</b> {grant['type']}</p>
-                <p><b>GPT Eligibility Justification:</b> {grant['justification']}</p>
-                <a href="{grant['url']}" target="_blank">🔗 View Details</a>
-            </div>
-        """, unsafe_allow_html=True)
-
-# ======= Bonus: Discover govt datasets =======
-@st.cache_data(ttl=86400)
-def discover_datasets(query="grant"):
-    url = "https://data.gov.sg/api/action/package_search"
-    try:
-        res = requests.get(url, params={"q": query}, timeout=10)
-        res.raise_for_status()
-        data = res.json()["result"]["results"]
-        return [(d["title"], d["resources"][0]["url"]) for d in data if d.get("resources")]
-    except:
-        return []
-
-with st.expander("Discover Government Grant Datasets"):
-    datasets = discover_datasets()
-    if datasets:
-        for title, link in datasets:
-            st.markdown(f"- [{title}]({link})")
-    else:
-        st.write("No datasets available or API error.")
-
-# ======= Quick Links Section =======
-st.divider()
-st.subheader(" Quick Grant Resources")
-st.markdown("""
-- [GoBusiness Grant Navigator](https://www.gobusiness.gov.sg/gov-assist/grants/)
-- [EnterpriseSG Financial Assistance Directory](https://www.enterprisesg.gov.sg/financial-assistance)
-- [PSG Pre-approved Solutions](https://www.gobusiness.gov.sg/productivity-solutions-grant/solutions/)
-- [Startup SG](https://www.startupsg.gov.sg/)
-- [SkillsFuture Enterprise Credit (SFEC)](https://www.skillsfuture.gov.sg/sfec)
-- [Market Readiness Assistance (MRA)](https://www.enterprisesg.gov.sg/financial-assistance/grants/for-local-companies/market-readiness-assistance/overview)
-""")
+st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | Data will refresh hourly.")
