@@ -8,3 +8,4 @@ python-dotenv>=1.0.0
 pytesseract
 PyMuPDF
 streamlit-extras
+reportlab
