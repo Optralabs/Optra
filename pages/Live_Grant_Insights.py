@@ -6,6 +6,8 @@ from typing import List, Tuple, Dict
 from datetime import datetime
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
+from utils.grant_scoring import score_grant_match
+from utils.grant_data import fetch_sample_grants
 
 # ======= Securely get OpenAI key from Streamlit secrets =======
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -76,74 +78,47 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ========== Page Config ==========
 st.set_page_config(page_title="Live Grant Insights", layout="wide")
+
 st.title("Live Grant Insights")
+st.markdown("Stay ahead with actionable recommendations tailored to your business.")
 
-# ========== Sidebar or Top Filter Section ==========
-st.markdown("### Tell us about your business")
+# Simulated user inputs (replace these with session state or inputs later)
+sector = st.session_state.get("sector", "Retail")
+revenue = st.session_state.get("revenue", 500000)
+staff_count = st.session_state.get("staff_count", 10)
+goal = st.session_state.get("goal", "Expand operations")
 
-with st.form("business_profile_form"):
-    col1, col2 = st.columns(2)
-
-    with col1:
-        biz_name = st.text_input("Business Name")
-        sector = st.selectbox("Sector", ["Retail", "F&B", "Manufacturing", "Professional Services", "Logistics", "Healthcare", "Other"])
-        revenue = st.selectbox("Annual Revenue", ["< S$100k", "S$100k - S$500k", "S$500k - S$1M", "> S$1M"])
-
-    with col2:
-        staff_count = st.selectbox("Number of Employees", ["1-5", "6-20", "21-50", "> 50"])
-        goal = st.selectbox("Main Business Goal", [
-            "Digitalisation", "Overseas Expansion", "Product Development",
-            "Automation", "Sustainability", "Training & Capability Building"
-        ])
-        submitted = st.form_submit_button("Show Grant Insights")
-
-# ========== Cache Grant Fetching Functions ========== 
-@st.cache_data(ttl=3600)
-def fetch_sample_grants() -> List[Dict]:
-    """ Placeholder for live scraping or API fetch. Replace this with real data.gov.sg or ESG API."""
-    return [
-        {"name": "Productivity Solutions Grant (PSG)", "summary": "Support for digital tools and equipment.", "type": "Digitalisation", "link": "https://www.gobusiness.gov.sg/grants/psg"},
-        {"name": "Enterprise Development Grant (EDG)", "summary": "Help companies grow and transform.", "type": "Capability Building", "link": "https://www.gobusiness.gov.sg/grants/edg"},
-        {"name": "Market Readiness Assistance (MRA)", "summary": "Support for international expansion.", "type": "Overseas Expansion", "link": "https://www.gobusiness.gov.sg/grants/mra"},
-    ]
-
-# ========== GPT-Powered Grant Matching ========== 
-@st.cache_data(show_spinner=False)
-def score_grant_match(grant: Dict, sector: str, revenue: str, staff_count: str, goal: str) -> Tuple[int, str]:
-    from openai import OpenAI
-    import os
-    
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    
+# === GPT: Application Readiness Checklist ===
+def get_readiness_checklist(grant_name, grant_type, sector):
     prompt = f"""
-    You are a Singapore grant consultant. A business in the {sector} sector with {staff_count} employees and {revenue} annual revenue wants to pursue {goal}. Evaluate if they qualify for the following grant:
+    You are a government grants consultant in Singapore. The SME is considering applying for a grant called '{grant_name}' which is a '{grant_type}' type of grant. 
+    The business is in the '{sector}' sector. 
 
-    Grant Name: {grant['name']}
-    Summary: {grant['summary']}
-
-    Score the match out of 100. Also provide a 1-paragraph justification.
+    Provide a checklist (3-6 items max) of documents or preparation steps this SME must complete before applying. 
+    Each item should be short and specific.
     """
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3
-    )
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful SME grant consultant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4,
+        )
+        checklist_text = response['choices'][0]['message']['content']
+        return checklist_text
+    except Exception as e:
+        return f"Could not generate checklist: {e}"
 
-    raw = response.choices[0].message.content
-    score_line = next((line for line in raw.split("\n") if any(char.isdigit() for char in line)), "")
-    score = int(''.join(filter(str.isdigit, score_line))) if score_line else 50
-    return score, raw.strip()
-
+# === Custom Progress Bar ===
 def custom_progress_bar(score: float):
-    # Clamp value between 0 and 100
     score = max(0, min(score, 100))
     percent = int(score)
-
-    bar_color = "#2F49F4"  # Glow Blue
-    bg_color = "#0B0E28"   # Grid Background
+    bar_color = "#2F49F4"
+    bg_color = "#0B0E28"
 
     bar_html = f"""
     <div style="width: 100%; background-color: {bg_color}; border-radius: 10px; padding: 3px;">
@@ -159,21 +134,26 @@ def custom_progress_bar(score: float):
     """
     components.html(bar_html, height=60)
 
-# ========== Grant Results ========== 
-if submitted:
-    st.markdown("---")
-    st.subheader("Matched Grants for You")
+# === Grant Matching Results ===
+grants = fetch_sample_grants()
+for grant in grants:
+    score, summary = score_grant_match(grant, sector, revenue, staff_count, goal)
 
-    grants = fetch_sample_grants()
+    with stylable_container(key=f"grant_{grant['name']}", css_styles="""
+        border: 1px solid #DDD;
+        padding: 1em;
+        border-radius: 12px;
+        margin-bottom: 1.5em;
+        background-color: #ffffff0a;
+    """):
+        st.markdown(f"### **{grant['name']}**")
+        st.markdown(f"*Type:* {grant['type']} | [View Grant Info]({grant['link']})")
+        st.markdown(f"**Why it matches:** {summary}")
+        custom_progress_bar(score)
 
-    for grant in grants:
-        score, summary = score_grant_match(grant, sector, revenue, staff_count, goal)
-        with stylable_container(key=f"grant_{grant['name']}", css_styles="border:1px solid #DDD; padding:1em; border-radius:12px; margin-bottom: 1em"):
-            st.markdown(f"**{grant['name']}** — *{grant['type']}*")
-            st.markdown(f"[View Grant Info]({grant['link']})")
-
-            clamped_score = max(0, min(100, float(score)))
-            custom_progress_bar(clamped_score)
+        with st.expander("Application Readiness Checklist"):
+            checklist = get_readiness_checklist(grant['name'], grant['type'], sector)
+            st.markdown(checklist)
 
 # ========== Quick Links Always Visible ==========
 st.markdown("---")
