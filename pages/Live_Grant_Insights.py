@@ -5,6 +5,7 @@ import openai
 from typing import List, Tuple, Dict
 from datetime import datetime
 from streamlit_extras.stylable_container import stylable_container
+import streamlit.components.v1 as components
 
 # ======= Securely get OpenAI key from Streamlit secrets =======
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -136,6 +137,28 @@ def score_grant_match(grant: Dict, sector: str, revenue: str, staff_count: str, 
     score = int(''.join(filter(str.isdigit, score_line))) if score_line else 50
     return score, raw.strip()
 
+def custom_progress_bar(score: float):
+    # Clamp value between 0 and 100
+    score = max(0, min(score, 100))
+    percent = int(score)
+
+    bar_color = "#2F49F4"  # Glow Blue
+    bg_color = "#0B0E28"   # Grid Background
+
+    bar_html = f"""
+    <div style="width: 100%; background-color: {bg_color}; border-radius: 10px; padding: 3px;">
+        <div style="
+            width: {percent}%;
+            background-color: {bar_color};
+            height: 20px;
+            border-radius: 7px;
+            transition: width 0.4s ease-in-out;">
+        </div>
+    </div>
+    <p style="color: #F5F5F5; font-size: 16px; margin-top: 6px;">Eligibility Score: {percent}%</p>
+    """
+    components.html(bar_html, height=60)
+
 # ========== Grant Results ========== 
 if submitted:
     st.markdown("---")
@@ -147,38 +170,10 @@ if submitted:
         score, summary = score_grant_match(grant, sector, revenue, staff_count, goal)
         with stylable_container(key=f"grant_{grant['name']}", css_styles="border:1px solid #DDD; padding:1em; border-radius:12px; margin-bottom: 1em"):
             st.markdown(f"**{grant['name']}** — *{grant['type']}*")
-            st.markdown(f" [View Grant Info]({grant['link']})")
+            st.markdown(f"[View Grant Info]({grant['link']})")
+
             clamped_score = max(0, min(100, float(score)))
-            import streamlit as st
-            import streamlit.components.v1 as components
-
-            def custom_progress_bar(score: float):
-                # Clamp value between 0 and 100
-                score = max(0, min(score, 100))
-                percent = int(score)
-
-                bar_color = "#2F49F4"  # Glow Blue
-                bg_color = "#0B0E28"   # Grid Background
-
-                bar_html = f"""
-                <div style="width: 100%; background-color: {bg_color}; border-radius: 10px; padding: 3px;">
-                    <div style="
-                        width: {percent}%;
-                        background-color: {bar_color};
-                        height: 20px;
-                        border-radius: 7px;
-                        transition: width 0.4s ease-in-out;">
-                    </div>
-                </div>
-                <p style="color: #F5F5F5; font-size: 16px; margin-top: 6px;">Eligibility Score: {percent}%</p>
-                """
-                components.html(bar_html, height=60)
-
-# Example usage
-custom_progress_bar(score=74.3)
-
-            st.markdown(f"**Score:** {score}/100")
-            st.markdown(f"**Analysis:** {summary}")
+            custom_progress_bar(clamped_score)
 
 # ========== Quick Links Always Visible ==========
 st.markdown("---")
