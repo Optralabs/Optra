@@ -78,6 +78,31 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Define realistic grant-specific checklist roadmap
+roadmap = {
+    "Productivity Solutions Grant (PSG)": [
+        "Identify IT solution or equipment vendor",
+        "Obtain official quotation from pre-approved vendor",
+        "Ensure your business is registered and operating in Singapore",
+        "Confirm that your purchase is not made before the grant application",
+        "Submit application via Business Grants Portal"
+    ],
+    "Enterprise Development Grant (EDG)": [
+        "Define project scope and objectives",
+        "Gather financial statements for past 3 years",
+        "Prepare project proposal with clear deliverables",
+        "Get official quotation from a third-party consultant/vendor",
+        "Ensure business is at least 30% locally owned"
+    ],
+    "SkillsFuture Enterprise Credit (SFEC)": [
+        "Ensure at least 3 local employees (CPF-contributing)",
+        "Verify $750+ SkillsFuture claim usage over relevant period",
+        "Check UEN qualifies for SFEC top-up",
+        "Choose eligible courses or solutions",
+        "Submit reimbursement claims after approved training"
+    ]
+}
+
 # ========== App Title ==========
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
