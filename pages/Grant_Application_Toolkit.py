@@ -239,25 +239,24 @@ Best regards,
 
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
-
+    
 # ===== Reset Planner Handling =====
 if "reset_triggered" not in st.session_state:
     st.session_state.reset_triggered = False
 
-if st.session_state.plan_generated and not st.session_state.reset_triggered:
-    if st.button("Reset Planner"):
-        st.session_state.reset_triggered = True
-        st.experimental_rerun()
-
-if st.session_state.get("reset_triggered", False):
-    # Delete all checklist and doccheck keys safely
-    keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
+def reset_planner():
+    keys_to_remove = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
     for key in keys_to_remove:
         del st.session_state[key]
-    # Delete main planner keys safely
-    for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
+    for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email", "reset_triggered"]:
         if key in st.session_state:
             del st.session_state[key]
-    # Reset the reset_triggered flag itself so next run starts fresh
-    st.session_state.reset_triggered = False
+    # After cleanup, trigger rerun once
     st.experimental_rerun()
+
+if st.session_state.plan_generated and not st.session_state.reset_triggered:
+    if st.button("Reset Planner"):
+        # Mark reset triggered and call reset function immediately
+        st.session_state.reset_triggered = True
+        reset_planner()
+
