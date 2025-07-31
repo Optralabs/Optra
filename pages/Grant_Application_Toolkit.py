@@ -199,7 +199,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
 
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
-    st.markdown("### 📬 AI-Powered Email Generator")
+    st.markdown("### AI-Powered Email Generator")
 
     email_purpose = st.selectbox(
         "Select Email Purpose",
@@ -241,7 +241,7 @@ Keep it formal, polite, and ready to send."""
                 generated_email = response.choices[0].message.content.strip()
                 st.text_area("Generated Email", value=generated_email, height=200)
             except Exception as e:
-                st.error("Failed to generate email. Please check your OpenAI key or try again.")
+                st.error(f"Failed to generate email. Error: {e}")
 
 
     st.success("Application Planner Ready. Begin your preparation today.")
