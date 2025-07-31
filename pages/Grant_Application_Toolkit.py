@@ -142,21 +142,23 @@ with st.form("sme_form"):
         st.session_state.email = email.strip()
 
 # ========= Timeline Caching =========
-@st.cache_data(show_spinner=False)
+from functools import lru_cache
+
+@lru_cache(maxsize=3)
 def generate_timeline_data(grant_name):
     checklist_items = roadmap.get(grant_name, [])
-    base_date = datetime.now()
+    base_date = datetime.today()
     events = [{
         "id": str(i + 1),
         "content": item,
         "start": (base_date + timedelta(days=i)).strftime("%Y-%m-%d"),
         "type": "box"
     } for i, item in enumerate(checklist_items)]
-
     return {
         "title": f"{grant_name} Preparation Timeline",
         "events": events
     }
+
 
 # ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
