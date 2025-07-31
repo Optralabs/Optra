@@ -1,18 +1,16 @@
 import streamlit as st
 from datetime import datetime, timedelta
 from streamlit_extras.stylable_container import stylable_container
-import streamlit.components.v1 as components
 import openai
 from streamlit_timeline import timeline
-
-# Setup OpenAI Key
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
-# ======= Brand Identity Logo Embed (keep your current one) =======
 from PIL import Image
 import base64
 from io import BytesIO
 
+# Setup OpenAI Key
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+# ======= Brand Identity Logo Embed =======
 def get_logo_base64(path, width=80):
     img = Image.open(path)
     img = img.resize((width, width), Image.Resampling.LANCZOS)
@@ -34,23 +32,15 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ----------------------------
-# 🧹 OPTRA Sidebar Setup
-# ----------------------------
+# ---------------------------- Sidebar UI & Theme ----------------------------
 st.markdown("""
     <style>
-        /* Force sidebar background to black */
         section[data-testid="stSidebar"] {
             background-color: #000000 !important;
         }
-        /* Sidebar text color */
         section[data-testid="stSidebar"] .css-1v0mbdj, 
         section[data-testid="stSidebar"] .css-1wvsk6o {
             color: #ffffff !important;
-        }
-        /* Optional spacing and styling tweaks */
-        .sidebar-content {
-            padding: 1.5rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -79,7 +69,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Define realistic grant-specific checklist roadmap
+# ========= Data Structures =========
 roadmap = {
     "Productivity Solutions Grant (PSG)": [
         "Identify IT solution or equipment vendor",
@@ -128,6 +118,7 @@ doc_checklist = {
     ]
 }
 
+# ========= App State Setup =========
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
 
@@ -136,6 +127,7 @@ if "plan_generated" not in st.session_state:
 if "selected_grant" not in st.session_state:
     st.session_state.selected_grant = None
 
+# ========= Main Form =========
 with st.form("sme_form"):
     selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
     company_name = st.text_input("Company Name")
@@ -150,6 +142,7 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
+# ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
@@ -168,18 +161,24 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         st.checkbox(doc, key=checkbox_key)
 
     st.markdown("### Visual Grant Timeline")
-
     timeline_events = []
     base_date = datetime.now()
+
     for i, item in enumerate(checklist_items):
         event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        timeline_events.append({"id": str(i+1), "content": item, "start": event_date, "type": "box"})
+        timeline_events.append({
+            "id": str(i+1),
+            "content": item,
+            "start": event_date,
+            "type": "box"
+        })
 
-    if timeline_events:
-        timeline_data = {"title": f"{st.session_state.selected_grant} Preparation Timeline", "events": timeline_events}
-        timeline(timeline_data, height=300)
-    else:
-        st.info("No timeline events to display.")
+    timeline_data = {
+        "title": f"{st.session_state.selected_grant} Preparation Timeline",
+        "events": timeline_events
+    }
+
+    timeline(timeline_data, height=300)
 
     st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
@@ -204,17 +203,14 @@ Looking forward to your response.
 Best regards,
 {st.session_state.contact_person} ({st.session_state.email})""", language="text")
 
-    st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
 
-# ====== Reset logic ======
-
+# ========= Reset Button =========
 def perform_reset():
-    keys_to_clear = [k for k in st.session_state if k.startswith("checklist_") or k.startswith("doccheck_")]
-    keys_to_clear += ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]
-    for k in keys_to_clear:
-        st.session_state.pop(k, None)
+    for key in list(st.session_state.keys()):
+        if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
+            del st.session_state[key]
+    st.rerun()
 
 if st.session_state.get("plan_generated"):
     st.button("Reset Planner", on_click=perform_reset)
-
