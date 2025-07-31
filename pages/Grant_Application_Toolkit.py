@@ -249,11 +249,15 @@ if st.session_state.plan_generated and not st.session_state.reset_triggered:
         st.session_state.reset_triggered = True
         st.experimental_rerun()
 
-if st.session_state.reset_triggered:
+if st.session_state.get("reset_triggered", False):
+    # Delete all checklist and doccheck keys safely
     keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
     for key in keys_to_remove:
         del st.session_state[key]
-    for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email", "reset_triggered"]:
+    # Delete main planner keys safely
+    for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
         if key in st.session_state:
             del st.session_state[key]
+    # Reset the reset_triggered flag itself so next run starts fresh
+    st.session_state.reset_triggered = False
     st.experimental_rerun()
