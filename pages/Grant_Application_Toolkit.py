@@ -7,7 +7,6 @@ from PIL import Image
 import base64
 from io import BytesIO
 
-# Setup OpenAI Key
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # ======= Brand Identity Logo Embed =======
@@ -142,6 +141,23 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
+# ========= Timeline Caching =========
+@st.cache_data(show_spinner=False)
+def generate_timeline_data(grant_name):
+    checklist_items = roadmap.get(grant_name, [])
+    base_date = datetime.now()
+    events = [{
+        "id": str(i + 1),
+        "content": item,
+        "start": (base_date + timedelta(days=i)).strftime("%Y-%m-%d"),
+        "type": "box"
+    } for i, item in enumerate(checklist_items)]
+
+    return {
+        "title": f"{grant_name} Preparation Timeline",
+        "events": events
+    }
+
 # ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
@@ -161,23 +177,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         st.checkbox(doc, key=checkbox_key)
 
     st.markdown("### Visual Grant Timeline")
-    timeline_events = []
-    base_date = datetime.now()
-
-    for i, item in enumerate(checklist_items):
-        event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        timeline_events.append({
-            "id": str(i+1),
-            "content": item,
-            "start": event_date,
-            "type": "box"
-        })
-
-    timeline_data = {
-        "title": f"{st.session_state.selected_grant} Preparation Timeline",
-        "events": timeline_events
-    }
-
+    timeline_data = generate_timeline_data(st.session_state.selected_grant)
     timeline(timeline_data, height=300)
 
     st.markdown("### Email Templates")
