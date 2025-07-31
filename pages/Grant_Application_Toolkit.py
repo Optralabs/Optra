@@ -1,14 +1,15 @@
 import streamlit as st
 from datetime import datetime, timedelta
 from streamlit_extras.stylable_container import stylable_container
-import openai
+from openai import OpenAI  # ✅ Updated import for new SDK
 from PIL import Image
 import base64
 from io import BytesIO
 import plotly.graph_objects as go
 import pandas as pd
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# ✅ Updated client-based API
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # ======= Brand Identity Logo Embed =======
 def get_logo_base64(path, width=80):
@@ -229,7 +230,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
 - Additional Context: {additional_context if additional_context else "None"}
 
 Keep it formal, polite, and ready to send."""
-                response = openai.ChatCompletion.create(
+                response = client.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are a business writing assistant that drafts grant-related emails."},
@@ -242,9 +243,6 @@ Keep it formal, polite, and ready to send."""
                 st.text_area("Generated Email", value=generated_email, height=200)
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
-
-
-    st.success("Application Planner Ready. Begin your preparation today.")
 
 # ========= Reset Button =========
 def perform_reset():
