@@ -175,26 +175,42 @@ if st.session_state.plan_generated:
     for i, doc in enumerate(docs):
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
+        
+from datetime import timedelta
 
-    # ==== TIMELINE ====
-    import datetime
+# ====== Visual Timeline with Debug and Safety Checks ======
+st.markdown("### Visual Grant Timeline")
 
-    st.markdown("### Visual Grant Timeline")
+# Get the checklist for the selected grant
+checklist_items = roadmap.get(st.session_state.selected_grant, [])
 
-    timeline_events = []
-    base_date = datetime.datetime.now()
+# Debug: show checklist items
+st.write("DEBUG: Checklist Items:", checklist_items)
 
-    for i, item in enumerate(checklist_items):
-        timeline_events.append({
-            "content": item,
-            "start": (base_date + datetime.timedelta(days=i)).strftime("%Y-%m-%d"),
-            "type": "box"
-        })
+timeline_events = []
+base_date = datetime.now()
 
-    if timeline_events:
-        timeline({"items": timeline_events}, height=300)
-    else:
-        st.info("No timeline events to display yet.")
+for i, item in enumerate(checklist_items):
+    # Spread events 1 day apart starting today to simulate timeline progression
+    event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
+    timeline_events.append({
+        "content": item,
+        "start": event_date,
+        "type": "box"
+    })
+
+# Debug: show prepared timeline events
+st.write("DEBUG: Timeline Events:", timeline_events)
+
+if len(timeline_events) > 0:
+    timeline_data = {
+        "title": f"{st.session_state.selected_grant} Preparation Timeline",
+        "items": timeline_events
+    }
+    timeline(timeline_data, height=300)
+else:
+    st.info("No timeline events to display yet. Please generate your application guide first.")
+
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
