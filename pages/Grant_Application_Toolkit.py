@@ -142,33 +142,33 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ========= Timeline Data Preparation (Horizontal Timeline using Bar Chart) =========
+# ========= Clean Horizontal Timeline =========
 def generate_clean_timeline(grant_name):
     checklist = roadmap.get(grant_name, [])
     base_date = datetime.today()
     df = pd.DataFrame({
         "Task": checklist,
-        "Start": [base_date + timedelta(days=i * 2) for i in range(len(checklist))],
+        "Date": [base_date + timedelta(days=i * 3) for i in range(len(checklist))]
     })
-    df["Finish"] = df["Start"] + timedelta(days=1)
 
     fig = go.Figure()
-    for _, row in df.iterrows():
-        fig.add_trace(go.Bar(
-            y=[row["Task"]],
-            x=[(row["Finish"] - row["Start"]).days],
-            orientation='h',
-            base=row["Start"],
-            marker=dict(color="#3e6ce2"),
-            hovertemplate=f"<b>{row['Task']}</b><br>Start: {row['Start'].strftime('%b %d')}<br>Finish: {row['Finish'].strftime('%b %d')}<extra></extra>"
-        ))
+
+    fig.add_trace(go.Scatter(
+        x=df["Date"],
+        y=[1] * len(df),
+        mode="markers+text",
+        marker=dict(size=14, color="#3e6ce2"),
+        text=df["Task"],
+        textposition="top center",
+        hovertemplate="<b>%{text}</b><br>%{x|%b %d, %Y}<extra></extra>"
+    ))
 
     fig.update_layout(
         title=f"{grant_name} Timeline",
-        height=400,
+        xaxis=dict(title="Date", showgrid=False),
+        yaxis=dict(visible=False),
+        height=300,
         margin=dict(l=20, r=20, t=50, b=20),
-        xaxis=dict(title="Date", type="date", showgrid=True),
-        yaxis=dict(title="", automargin=True),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         font=dict(color="white")
