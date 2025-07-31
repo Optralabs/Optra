@@ -209,18 +209,23 @@ Best regards,
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
 
-# ===== Reset Planner Callback and Button =====
-def reset_planner():
+# ===== Reset Planner Handling =====
+if "reset_triggered" not in st.session_state:
+    st.session_state.reset_triggered = False
+
+if st.session_state.plan_generated and not st.session_state.reset_triggered:
+    if st.button("Reset Planner"):
+        # Set a flag to trigger reset on the next script run
+        st.session_state.reset_triggered = True
+        st.experimental_rerun()
+
+# Handle reset logic on the next cycle
+if st.session_state.reset_triggered:
     keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
     for key in keys_to_remove:
         del st.session_state[key]
-    st.session_state.plan_generated = False
-    for key in ["selected_grant", "company_name", "contact_person", "email"]:
+    for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email", "reset_triggered"]:
         if key in st.session_state:
             del st.session_state[key]
     st.experimental_rerun()
 
-if st.session_state.plan_generated:
-    st.button("Reset Planner", on_click=reset_planner)
-
-st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
