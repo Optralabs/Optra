@@ -80,11 +80,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.set_page_config(page_title="Live Grant Insights", layout="wide")
-
-st.title("Live Grant Insights")
-st.markdown("Stay ahead with actionable recommendations tailored to your business.")
-
 # ========== Grant Scoring ==========
 def score_grant_match(grant, sector, revenue, staff_count, goal):
     score = 0
