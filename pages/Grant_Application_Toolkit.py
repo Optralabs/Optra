@@ -244,19 +244,20 @@ Best regards,
 if "reset_triggered" not in st.session_state:
     st.session_state.reset_triggered = False
 
-def reset_planner():
-    keys_to_remove = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
-    for key in keys_to_remove:
-        del st.session_state[key]
-    for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email", "reset_triggered"]:
-        if key in st.session_state:
-            del st.session_state[key]
-    # After cleanup, trigger rerun once
-    st.experimental_rerun()
+def perform_reset():
+    keys_to_clear = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
+    keys_to_clear += ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]
+    for key in keys_to_clear:
+        st.session_state.pop(key, None)
+    st.session_state.reset_triggered = False  # allow reset again in future
 
-if st.session_state.plan_generated and not st.session_state.reset_triggered:
+if st.session_state.get("plan_generated") and not st.session_state.reset_triggered:
     if st.button("Reset Planner"):
-        # Mark reset triggered and call reset function immediately
         st.session_state.reset_triggered = True
-        reset_planner()
+        st.experimental_rerun()
+
+# This block safely runs AFTER rerun
+if st.session_state.get("reset_triggered", False):
+    perform_reset()
+
 
