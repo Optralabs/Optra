@@ -176,14 +176,22 @@ if st.session_state.plan_generated:
     for i, doc in enumerate(docs):
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
-
-    # Reset button to clear checklists and form state
+        
     if st.button("Reset Planner"):
-        keys_to_remove = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
-        for key in keys_to_remove:
-            del st.session_state[key]
-        st.session_state.plan_generated = False
-        st.experimental_rerun()
+    keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
+    for key in keys_to_remove:
+        del st.session_state[key]
+    st.session_state.plan_generated = False
+    if "selected_grant" in st.session_state:
+        del st.session_state.selected_grant
+    if "company_name" in st.session_state:
+        del st.session_state.company_name
+    if "contact_person" in st.session_state:
+        del st.session_state.contact_person
+    if "email" in st.session_state:
+        del st.session_state.email
+    st.experimental_rerun()
+
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
