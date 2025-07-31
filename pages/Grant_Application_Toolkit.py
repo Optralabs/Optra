@@ -152,15 +152,15 @@ with st.form("sme_form"):
     email = st.text_input("Email")
     submitted = st.form_submit_button("Generate Application Guide")
 
-    if submitted and company_name:
+    if submitted and company_name.strip() != "":
         st.session_state.plan_generated = True
         st.session_state.selected_grant = selected_grant
-        st.session_state.company_name = company_name
-        st.session_state.contact_person = contact_person
-        st.session_state.email = email
+        st.session_state.company_name = company_name.strip()
+        st.session_state.contact_person = contact_person.strip()
+        st.session_state.email = email.strip()
 
 # ========== Show Checklist and Details if Plan Generated ==========
-if st.session_state.plan_generated:
+if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
@@ -179,6 +179,10 @@ if st.session_state.plan_generated:
 
     # ====== Visual Timeline ======
     st.markdown("### Visual Grant Timeline")
+
+    # DEBUG: Show current selected grant and checklist items
+    st.write(f"DEBUG: Selected Grant = {st.session_state.selected_grant}")
+    st.write(f"DEBUG: Checklist Items = {checklist_items}")
 
     timeline_events = []
     base_date = datetime.now()
