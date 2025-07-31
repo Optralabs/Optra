@@ -177,33 +177,35 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
 
-    # ====== Visual Timeline ======
-    st.markdown("### Visual Grant Timeline")
+# ====== Visual Timeline ======
+st.markdown("### Visual Grant Timeline")
 
-    # DEBUG: Show current selected grant and checklist items
-    st.write(f"DEBUG: Selected Grant = {st.session_state.selected_grant}")
-    st.write(f"DEBUG: Checklist Items = {checklist_items}")
+# DEBUG: Show current selected grant and checklist items
+st.write(f"DEBUG: Selected Grant = {st.session_state.selected_grant}")
+st.write(f"DEBUG: Checklist Items = {checklist_items}")
 
-    timeline_events = []
-    base_date = datetime.now()
+timeline_events = []
+base_date = datetime.now()
 
-    # Create timeline events spaced one day apart starting today
-    for i, item in enumerate(checklist_items):
-        event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        timeline_events.append({
-            "content": item,
-            "start": event_date,
-            "type": "box"
-        })
+for i, item in enumerate(checklist_items):
+    event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
+    timeline_events.append({
+        "content": item,
+        "start": event_date,
+        "type": "box"
+    })
 
-    if timeline_events:
-        timeline_data = {
-            "title": f"{st.session_state.selected_grant} Preparation Timeline",
-            "items": timeline_events
-        }
-        timeline(timeline_data, height=300)
-    else:
-        st.info("No timeline events to display.")
+if timeline_events:
+    for idx, event in enumerate(timeline_events):
+        event["id"] = str(idx + 1)  # Add required id
+
+    timeline_data = {
+        "title": f"{st.session_state.selected_grant} Preparation Timeline",
+        "events": timeline_events  # Correct key here!
+    }
+    timeline(timeline_data, height=300)
+else:
+    st.info("No timeline events to display.")
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
