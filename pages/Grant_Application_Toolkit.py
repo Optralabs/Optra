@@ -159,7 +159,6 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person
         st.session_state.email = email
 
-# ========== Show Checklist and Details if Plan Generated ==========
 if st.session_state.plan_generated:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
@@ -177,24 +176,25 @@ if st.session_state.plan_generated:
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
 
-    # ========== Visual Timeline ==========
+    # ==== TIMELINE ====
+    import datetime
+
     st.markdown("### Visual Grant Timeline")
 
     timeline_events = []
+    base_date = datetime.datetime.now()
 
-    for item in checklist_items:
+    for i, item in enumerate(checklist_items):
         timeline_events.append({
             "content": item,
-            "start": datetime.now().strftime("%Y-%m-%d"),
+            "start": (base_date + datetime.timedelta(days=i)).strftime("%Y-%m-%d"),
             "type": "box"
         })
 
-    timeline_data = {
-        "title": f"{st.session_state.selected_grant} Preparation Timeline",
-        "items": timeline_events
-    }
-
-    timeline(timeline_data, height=300)
+    if timeline_events:
+        timeline({"items": timeline_events}, height=300)
+    else:
+        st.info("No timeline events to display yet.")
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
@@ -228,6 +228,7 @@ Best regards,
 
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
+
 
 # ===== Reset Planner Handling =====
 if "reset_triggered" not in st.session_state:
