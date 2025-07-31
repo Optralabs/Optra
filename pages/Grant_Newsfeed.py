@@ -6,10 +6,6 @@ from io import BytesIO
 import base64
 from datetime import datetime
 
-# ----------------------------
-# Load and embed OPTRA logo
-# ----------------------------
-
 # Favicon and layout config (MUST come first)
 st.set_page_config(
     page_title="Smart Grant Advisor",
@@ -17,22 +13,22 @@ st.set_page_config(
     layout="wide"
 )
 
-# Updated function: preserve aspect ratio when resizing logo
-def get_logo_base64(path, width=80):
+# Your existing OPTRA logo banner (no changes needed)
+def get_logo_base64(path, size=80):
     img = Image.open(path)
-    wpercent = (width / float(img.size[0]))
+    wpercent = (size / float(img.size[0]))
     hsize = int((float(img.size[1]) * float(wpercent)))
-    img = img.resize((width, hsize), Image.Resampling.LANCZOS)
+    img = img.resize((size, hsize), Image.Resampling.LANCZOS)
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode()
 
-logo_base64 = get_logo_base64("optra_logo_transparent.png")
+logo_base64 = get_logo_base64("optra_logo_transparent.png", size=80)
 
 st.markdown(
     f"""
     <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px; height: auto; object-fit: contain;' />
+        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
         <div>
             <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
         </div>
@@ -41,7 +37,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Set favicon via base64 (unchanged)
 def set_favicon():
     logo_base64_fav = get_logo_base64("optra_logo_transparent.png", size=32)
     if logo_base64_fav:
