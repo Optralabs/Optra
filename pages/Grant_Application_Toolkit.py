@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
 import openai
@@ -159,11 +159,13 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person
         st.session_state.email = email
 
+# ========== Show Checklist and Details if Plan Generated ==========
 if st.session_state.plan_generated:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
     checklist_items = roadmap.get(st.session_state.selected_grant, [])
+    docs = doc_checklist.get(st.session_state.selected_grant, [])
 
     st.markdown("### Your Action Checklist")
     for i, item in enumerate(checklist_items):
@@ -171,46 +173,33 @@ if st.session_state.plan_generated:
         st.checkbox(item, key=checkbox_key)
 
     st.markdown("### Grant-Specific Document Checklist")
-    docs = doc_checklist.get(st.session_state.selected_grant, [])
     for i, doc in enumerate(docs):
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
-        
-from datetime import timedelta
 
-# ====== Visual Timeline with Debug and Safety Checks ======
-st.markdown("### Visual Grant Timeline")
+    # ====== Visual Timeline ======
+    st.markdown("### Visual Grant Timeline")
 
-# Get the checklist for the selected grant
-checklist_items = roadmap.get(st.session_state.selected_grant, [])
+    timeline_events = []
+    base_date = datetime.now()
 
-# Debug: show checklist items
-st.write("DEBUG: Checklist Items:", checklist_items)
+    # Create timeline events spaced one day apart starting today
+    for i, item in enumerate(checklist_items):
+        event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
+        timeline_events.append({
+            "content": item,
+            "start": event_date,
+            "type": "box"
+        })
 
-timeline_events = []
-base_date = datetime.now()
-
-for i, item in enumerate(checklist_items):
-    # Spread events 1 day apart starting today to simulate timeline progression
-    event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
-    timeline_events.append({
-        "content": item,
-        "start": event_date,
-        "type": "box"
-    })
-
-# Debug: show prepared timeline events
-st.write("DEBUG: Timeline Events:", timeline_events)
-
-if len(timeline_events) > 0:
-    timeline_data = {
-        "title": f"{st.session_state.selected_grant} Preparation Timeline",
-        "items": timeline_events
-    }
-    timeline(timeline_data, height=300)
-else:
-    st.info("No timeline events to display yet. Please generate your application guide first.")
-
+    if timeline_events:
+        timeline_data = {
+            "title": f"{st.session_state.selected_grant} Preparation Timeline",
+            "items": timeline_events
+        }
+        timeline(timeline_data, height=300)
+    else:
+        st.info("No timeline events to display.")
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
@@ -245,18 +234,15 @@ Best regards,
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
 
-
 # ===== Reset Planner Handling =====
 if "reset_triggered" not in st.session_state:
     st.session_state.reset_triggered = False
 
 if st.session_state.plan_generated and not st.session_state.reset_triggered:
     if st.button("Reset Planner"):
-        # Set a flag to trigger reset on the next script run
         st.session_state.reset_triggered = True
-        st.rerun()
+        st.experimental_rerun()
 
-# Handle reset logic on the next cycle
 if st.session_state.reset_triggered:
     keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
     for key in keys_to_remove:
@@ -264,4 +250,4 @@ if st.session_state.reset_triggered:
     for key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email", "reset_triggered"]:
         if key in st.session_state:
             del st.session_state[key]
-    st.rerun()
+    st.experimental_rerun()
