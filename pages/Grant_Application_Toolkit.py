@@ -35,7 +35,7 @@ st.markdown(
 )
 
 # ----------------------------
-# 🧩 OPTRA Sidebar Setup
+# 🧹 OPTRA Sidebar Setup
 # ----------------------------
 st.markdown("""
     <style>
@@ -104,7 +104,6 @@ roadmap = {
     ]
 }
 
-# Document checklist
 doc_checklist = {
     "Enterprise Development Grant (EDG)": [
         "ACRA Bizfile",
@@ -129,37 +128,28 @@ doc_checklist = {
     ]
 }
 
-# ========== App Title ==========
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
 
-# Initialize session state variables if not exist
 if "plan_generated" not in st.session_state:
     st.session_state.plan_generated = False
-
 if "selected_grant" not in st.session_state:
     st.session_state.selected_grant = None
 
-# ========== SME Details Form ==========
 with st.form("sme_form"):
-    selected_grant = st.selectbox("Select a Grant", [
-        "Enterprise Development Grant (EDG)",
-        "Productivity Solutions Grant (PSG)",
-        "Market Readiness Assistance (MRA)"
-    ])
+    selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
     company_name = st.text_input("Company Name")
     contact_person = st.text_input("Contact Person")
     email = st.text_input("Email")
     submitted = st.form_submit_button("Generate Application Guide")
 
-    if submitted and company_name.strip() != "":
+    if submitted and company_name.strip():
         st.session_state.plan_generated = True
         st.session_state.selected_grant = selected_grant
         st.session_state.company_name = company_name.strip()
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ========== Show Checklist and Details if Plan Generated ==========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
@@ -177,54 +167,33 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
 
-    # ====== Visual Timeline ======
     st.markdown("### Visual Grant Timeline")
-
-    # DEBUG: Show current selected grant and checklist items
-    st.write(f"DEBUG: Selected Grant = {st.session_state.selected_grant}")
-    st.write(f"DEBUG: Checklist Items = {checklist_items}")
 
     timeline_events = []
     base_date = datetime.now()
-
     for i, item in enumerate(checklist_items):
         event_date = (base_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        timeline_events.append({
-            "content": item,
-            "start": event_date,
-            "type": "box"
-        })
+        timeline_events.append({"id": str(i+1), "content": item, "start": event_date, "type": "box"})
 
     if timeline_events:
-        for idx, event in enumerate(timeline_events):
-            event["id"] = str(idx + 1)  # Add required id
-
-        timeline_data = {
-            "title": f"{st.session_state.selected_grant} Preparation Timeline",
-            "events": timeline_events  # Correct key here!
-        }
+        timeline_data = {"title": f"{st.session_state.selected_grant} Preparation Timeline", "events": timeline_events}
         timeline(timeline_data, height=300)
     else:
         st.info("No timeline events to display.")
 
-    # ========== Email Templates ==========
     st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
-    vendor_email = f"""
-Dear [Vendor Name],
+    st.code(f"""Dear [Vendor Name],
 
 I am reaching out on behalf of {st.session_state.company_name} regarding a quotation for a project we are planning to apply under the {st.session_state.selected_grant}. 
 
 Could you please share a formal quote including project scope and pricing?
 
 Thank you,
-{st.session_state.contact_person}
-    """
-    st.code(vendor_email.strip(), language="text")
+{st.session_state.contact_person}""", language="text")
 
     st.markdown("**To Grant Officer (Clarification):**")
-    officer_email = f"""
-Dear Grant Officer,
+    st.code(f"""Dear Grant Officer,
 
 I am currently preparing an application for the {st.session_state.selected_grant} on behalf of {st.session_state.company_name}. 
 
@@ -233,33 +202,24 @@ Could I clarify the required documents and eligibility details before submission
 Looking forward to your response.
 
 Best regards,
-{st.session_state.contact_person} ({st.session_state.email})
-    """
-    st.code(officer_email.strip(), language="text")
+{st.session_state.contact_person} ({st.session_state.email})""", language="text")
 
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
-    
-# ===== Reset Planner Handling =====
+
 if "trigger_reset" not in st.session_state:
     st.session_state.trigger_reset = False
 
 def perform_reset():
-    # Clear all planner-related keys
-    keys_to_clear = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
+    keys_to_clear = [k for k in st.session_state if k.startswith("checklist_") or k.startswith("doccheck_")]
     keys_to_clear += ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]
-    for key in keys_to_clear:
-        st.session_state.pop(key, None)
-    st.session_state.trigger_reset = False 
+    for k in keys_to_clear:
+        st.session_state.pop(k, None)
+    st.session_state.trigger_reset = False
 
-# Show the button only when there's a plan generated
-if st.session_state.get("plan_generated", False):
+if st.session_state.get("plan_generated"):
     if st.button("Reset Planner"):
         st.session_state.trigger_reset = True
 
-# Perform reset after the next script run (cleanly)
-if st.session_state.get("trigger_reset", False):
+if st.session_state.get("trigger_reset"):
     perform_reset()
-    st.experimental_rerun() 
-
-
