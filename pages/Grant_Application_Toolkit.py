@@ -103,88 +103,43 @@ roadmap = {
     ]
 }
 
+# Document checklist
+doc_checklist = {
+    "Enterprise Development Grant (EDG)": [
+        "ACRA Bizfile",
+        "Audited Financial Statements (last 2 years)",
+        "Project Proposal Document",
+        "Vendor Quotation",
+        "Company's Financial Projections"
+    ],
+    "Productivity Solutions Grant (PSG)": [
+        "ACRA Bizfile",
+        "Pre-approved Vendor Quotation",
+        "Screenshots of Quoted IT Solution",
+        "Purchase Order (if applicable)",
+        "Product Brochure / Specs Sheet"
+    ],
+    "Market Readiness Assistance (MRA)": [
+        "ACRA Bizfile",
+        "Vendor Quotation",
+        "Proposed Marketing Plan",
+        "Proof of Overseas Market Interest",
+        "Company Bank Statement"
+    ]
+}
+
 # ========== App Title ==========
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
 
-# ========== SME Details ==========
-st.subheader("Your SME Profile")
-with st.form("sme_form"):
-    grant = st.selectbox("Select a Grant", [
-        "Enterprise Development Grant (EDG)",
-        "Productivity Solutions Grant (PSG)",
-        "Market Readiness Assistance (MRA)"
-    ])
-    company_name = st.text_input("Company Name")
-    contact_person = st.text_input("Contact Person")
-    email = st.text_input("Email")
-    submitted = st.form_submit_button("Generate Application Guide")
-
-# ========== Generate Plan ==========
-if submitted and company_name:
-    st.markdown("---")
-    st.subheader(f"Next Steps for {grant}")
-
-    roadmap = {
-        "Enterprise Development Grant (EDG)": [
-            "Check your business is registered and operational in Singapore",
-            "Prepare latest 2 years of audited financial statements",
-            "Define project scope and desired outcomes",
-            "Engage a pre-approved consultant (if applicable)",
-            "Submit application via Business Grants Portal (BGP)"
-        ],
-        "Productivity Solutions Grant (PSG)": [
-            "Choose a pre-approved vendor",
-            "Request vendor quotation",
-            "Prepare company ACRA Bizfile",
-            "Login to Business Grants Portal and submit"
-        ],
-        "Market Readiness Assistance (MRA)": [
-            "Ensure at least 30% local shareholding",
-            "Confirm overseas business expansion intent",
-            "Gather vendor quotations",
-            "Draft export marketing plan",
-            "Submit through Business Grants Portal"
-        ]
-    }
-
-    st.markdown("### Your Action Checklist")
-    for item in roadmap.get(grant, []):
-        st.checkbox(item, value=False)
-
-    # ========== Grant-Specific Document Checklist ==========
-    st.markdown("### Grant-Specific Document Checklist")
-    doc_checklist = {
-        "Enterprise Development Grant (EDG)": [
-            "ACRA Bizfile",
-            "Audited Financial Statements (last 2 years)",
-            "Project Proposal Document",
-            "Vendor Quotation",
-            "Company's Financial Projections"
-        ],
-        "Productivity Solutions Grant (PSG)": [
-            "ACRA Bizfile",
-            "Pre-approved Vendor Quotation",
-            "Screenshots of Quoted IT Solution",
-            "Purchase Order (if applicable)",
-            "Product Brochure / Specs Sheet"
-        ],
-        "Market Readiness Assistance (MRA)": [
-            "ACRA Bizfile",
-            "Vendor Quotation",
-            "Proposed Marketing Plan",
-            "Proof of Overseas Market Interest",
-            "Company Bank Statement"
-        ]
-    }
-    for doc in doc_checklist.get(grant, []):
-        st.checkbox(doc, value=False)
-
-# Initialize session state variable on first load
+# Initialize session state variables if not exist
 if "plan_generated" not in st.session_state:
     st.session_state.plan_generated = False
 
-# Your grant selection form (example, adjust variable names as needed)
+if "selected_grant" not in st.session_state:
+    st.session_state.selected_grant = None
+
+# ========== SME Details Form ==========
 with st.form("sme_form"):
     selected_grant = st.selectbox("Select a Grant", [
         "Enterprise Development Grant (EDG)",
@@ -196,30 +151,39 @@ with st.form("sme_form"):
     email = st.text_input("Email")
     submitted = st.form_submit_button("Generate Application Guide")
 
-# When user submits form, set plan_generated to True
-if submitted and company_name:
-    st.session_state.plan_generated = True
+    if submitted and company_name:
+        st.session_state.plan_generated = True
+        st.session_state.selected_grant = selected_grant
+        st.session_state.company_name = company_name
+        st.session_state.contact_person = contact_person
+        st.session_state.email = email
 
-# Show checklist only if plan has been generated
-if st.session_state.plan_generated and selected_grant:
+# ========== Show Checklist and Details if Plan Generated ==========
+if st.session_state.plan_generated:
+
     st.markdown("---")
-    st.subheader(f"Grant-Specific Document Checklist for {selected_grant}")
+    st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
-    checklist_items = roadmap.get(selected_grant, [])
+    checklist_items = roadmap.get(st.session_state.selected_grant, [])
 
+    st.markdown("### Your Action Checklist")
     for i, item in enumerate(checklist_items):
-        # Use a unique key per grant + item index to keep checkbox state
-        checkbox_key = f"{selected_grant}_checklist_{i}"
+        checkbox_key = f"checklist_{st.session_state.selected_grant}_{i}"
         st.checkbox(item, key=checkbox_key)
 
-    # Add Reset button to clear checkboxes and form state
+    st.markdown("### Grant-Specific Document Checklist")
+    docs = doc_checklist.get(st.session_state.selected_grant, [])
+    for i, doc in enumerate(docs):
+        checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
+        st.checkbox(doc, key=checkbox_key)
+
+    # Reset button to clear checklists and form state
     if st.button("Reset Planner"):
-        for key in st.session_state.keys():
-            if key.startswith(selected_grant + "_checklist_") or key == "plan_generated":
-                del st.session_state[key]
+        keys_to_remove = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
+        for key in keys_to_remove:
+            del st.session_state[key]
         st.session_state.plan_generated = False
         st.experimental_rerun()
-
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
@@ -227,12 +191,12 @@ if st.session_state.plan_generated and selected_grant:
     vendor_email = f"""
 Dear [Vendor Name],
 
-I am reaching out on behalf of {company_name} regarding a quotation for a project we are planning to apply under the {grant}. 
+I am reaching out on behalf of {st.session_state.company_name} regarding a quotation for a project we are planning to apply under the {st.session_state.selected_grant}. 
 
 Could you please share a formal quote including project scope and pricing?
 
 Thank you,
-{contact_person}
+{st.session_state.contact_person}
     """
     st.code(vendor_email.strip(), language="text")
 
@@ -240,14 +204,14 @@ Thank you,
     officer_email = f"""
 Dear Grant Officer,
 
-I am currently preparing an application for the {grant} on behalf of {company_name}. 
+I am currently preparing an application for the {st.session_state.selected_grant} on behalf of {st.session_state.company_name}. 
 
 Could I clarify the required documents and eligibility details before submission?
 
 Looking forward to your response.
 
 Best regards,
-{contact_person} ({email})
+{st.session_state.contact_person} ({st.session_state.email})
     """
     st.code(officer_email.strip(), language="text")
 
