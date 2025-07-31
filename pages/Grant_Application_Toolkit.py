@@ -2,10 +2,11 @@ import streamlit as st
 from datetime import datetime, timedelta
 from streamlit_extras.stylable_container import stylable_container
 import openai
-from streamlit_timeline import timeline
 from PIL import Image
 import base64
 from io import BytesIO
+import plotly.express as px
+import pandas as pd
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
@@ -141,26 +142,21 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ========= Timeline Caching =========
-from functools import lru_cache
-
-@lru_cache(maxsize=3)
-def generate_timeline_data(grant_name):
+# ========= Timeline Data Preparation Using Plotly =========
+def generate_timeline_df(grant_name):
     checklist_items = roadmap.get(grant_name, [])
     base_date = datetime.today()
-    events = [{
-        "id": str(i + 1),
-        "content": item,
-        "start": (base_date + timedelta(days=i)).strftime("%Y-%m-%d"),
-        "type": "box"
-    } for i, item in enumerate(checklist_items)]
-    # streamlit_timeline expects 'data' key containing the timeline info
-    return {
-        "data": {
-            "title": f"{grant_name} Preparation Timeline",
-            "events": events
-        }
-    }
+    data = []
+    for i, item in enumerate(checklist_items):
+        start_date = base_date + timedelta(days=i)
+        end_date = start_date + timedelta(days=1)  # assume 1 day per task
+        data.append({
+            "Task": item,
+            "Start": start_date,
+            "Finish": end_date,
+            "Grant": grant_name
+        })
+    return pd.DataFrame(data)
 
 # ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
@@ -181,16 +177,21 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         st.checkbox(doc, key=checkbox_key)
 
     st.markdown("### Visual Grant Timeline")
-    timeline_data = generate_timeline_data(st.session_state.selected_grant)
 
-    # --- DEBUG: show raw data to confirm ---
-    st.write(timeline_data)
+    timeline_df = generate_timeline_df(st.session_state.selected_grant)
 
-    # timeline requires the dict under 'data' key, not top level
-    try:
-        timeline(timeline_data["data"], height=300)
-    except Exception as e:
-        st.error(f"Failed to load timeline: {e}")
+    fig = px.timeline(
+        timeline_df,
+        x_start="Start",
+        x_end="Finish",
+        y="Task",
+        color="Grant",
+        title=f"{st.session_state.selected_grant} Preparation Timeline"
+    )
+    fig.update_yaxes(autorange="reversed")  # Tasks top-down
+    fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=350)
+
+    st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
@@ -222,7 +223,7 @@ def perform_reset():
     for key in list(st.session_state.keys()):
         if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
             del st.session_state[key]
-    # Removed st.rerun() here as it is a no-op in callback
+    # No st.rerun() as it's a no-op in callback
 
 if st.session_state.get("plan_generated"):
     st.button("Reset Planner", on_click=perform_reset)
