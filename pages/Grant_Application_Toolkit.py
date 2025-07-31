@@ -160,7 +160,6 @@ with st.form("sme_form"):
 
 # ========== Show Checklist and Details if Plan Generated ==========
 if st.session_state.plan_generated:
-
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
@@ -176,21 +175,6 @@ if st.session_state.plan_generated:
     for i, doc in enumerate(docs):
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
-
-    if st.button("Reset Planner"):
-        keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
-        for key in keys_to_remove:
-            del st.session_state[key]
-        st.session_state.plan_generated = False
-        if "selected_grant" in st.session_state:
-            del st.session_state.selected_grant
-        if "company_name" in st.session_state:
-            del st.session_state.company_name
-        if "contact_person" in st.session_state:
-            del st.session_state.contact_person
-        if "email" in st.session_state:
-            del st.session_state.email
-        st.experimental_rerun()
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
@@ -224,5 +208,17 @@ Best regards,
 
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
+
+# ===== Reset Planner Button Outside Form and Checklist Block =====
+if st.session_state.plan_generated:
+    if st.button("Reset Planner"):
+        keys_to_remove = [key for key in list(st.session_state.keys()) if key.startswith("checklist_") or key.startswith("doccheck_")]
+        for key in keys_to_remove:
+            del st.session_state[key]
+        st.session_state.plan_generated = False
+        for key in ["selected_grant", "company_name", "contact_person", "email"]:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.experimental_rerun()
 
 st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
