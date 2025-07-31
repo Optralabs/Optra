@@ -155,6 +155,38 @@ if submitted and company_name:
     for doc in doc_checklist.get(grant, []):
         st.checkbox(doc, value=False)
 
+# Setup session state for checklist
+if "checklist_state" not in st.session_state:
+    st.session_state.checklist_state = {}
+
+if "active_grant" not in st.session_state:
+    st.session_state.active_grant = grant
+
+# Detect grant change and reset if needed
+if grant != st.session_state.active_grant:
+    st.session_state.checklist_state = {}  # reset checklist for new grant
+    st.session_state.active_grant = grant
+
+checklist_items = roadmap.get(grant, [])
+st.markdown("### 📌 Your Action Checklist")
+
+for i, item in enumerate(checklist_items):
+    key = f"{grant}_{i}"
+    if key not in st.session_state.checklist_state:
+        st.session_state.checklist_state[key] = False
+    st.session_state.checklist_state[key] = st.checkbox(
+        item,
+        value=st.session_state.checklist_state[key],
+        key=key
+    )
+
+# Add Reset Button
+if st.button("🔁 Reset Checklist"):
+    for i in range(len(checklist_items)):
+        key = f"{grant}_{i}"
+        st.session_state.checklist_state[key] = False
+
+
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
