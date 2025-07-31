@@ -219,7 +219,6 @@ Best regards,
 
     st.success("Application Planner Ready. Begin your preparation today.")
 
-
 # ========= Reset Button =========
 def perform_reset():
     for key in list(st.session_state.keys()):
