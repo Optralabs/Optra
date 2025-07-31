@@ -154,9 +154,12 @@ def generate_timeline_data(grant_name):
         "start": (base_date + timedelta(days=i)).strftime("%Y-%m-%d"),
         "type": "box"
     } for i, item in enumerate(checklist_items)]
+    # streamlit_timeline expects 'data' key containing the timeline info
     return {
-        "title": f"{grant_name} Preparation Timeline",
-        "events": events
+        "data": {
+            "title": f"{grant_name} Preparation Timeline",
+            "events": events
+        }
     }
 
 # ========= Planner UI Output =========
@@ -177,20 +180,17 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
 
-st.markdown("### Visual Grant Timeline")
+    st.markdown("### Visual Grant Timeline")
+    timeline_data = generate_timeline_data(st.session_state.selected_grant)
 
-# Use the same generated timeline data
-timeline_data = generate_timeline_data(st.session_state.selected_grant)
+    # --- DEBUG: show raw data to confirm ---
+    st.write(timeline_data)
 
-# Show the raw timeline data (for debug)
-st.write(timeline_data)
-
-# Minimal timeline call - direct use of timeline component
-try:
-    timeline(timeline_data, height=350)
-except Exception as e:
-    st.error(f"Error rendering timeline: {e}")
-
+    # timeline requires the dict under 'data' key, not top level
+    try:
+        timeline(timeline_data["data"], height=300)
+    except Exception as e:
+        st.error(f"Failed to load timeline: {e}")
 
     st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
@@ -222,7 +222,7 @@ def perform_reset():
     for key in list(st.session_state.keys()):
         if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
             del st.session_state[key]
-    st.rerun()
+    # Removed st.rerun() here as it is a no-op in callback
 
 if st.session_state.get("plan_generated"):
     st.button("Reset Planner", on_click=perform_reset)
