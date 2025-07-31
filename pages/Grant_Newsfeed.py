@@ -1,4 +1,3 @@
-
 import streamlit as st
 import feedparser
 import re
@@ -8,85 +7,44 @@ import base64
 from datetime import datetime
 
 # ----------------------------
-# Load and embed OPTRA logo
+# Set page config with favicon (only once, at top)
 # ----------------------------
-import streamlit as st
-from PIL import Image
-from io import BytesIO
-import base64
-
-# Favicon and layout config (MUST come first)
 st.set_page_config(
     page_title="Smart Grant Advisor",
     page_icon=Image.open("optra_logo_transparent.png"),
     layout="wide"
 )
 
-# Your existing OPTRA logo banner (no changes needed)
-def get_logo_base64(path, width=80):
-    img = Image.open(path)
-    img = img.resize((width, width), Image.Resampling.LANCZOS)
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode()
-
-logo_base64 = get_logo_base64("optra_logo_transparent.png")
-
-st.markdown(
-    f"""
-    <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
-        <div>
-            <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
-# Set page config
-
-import streamlit as st
-import base64
-from PIL import Image
-from io import BytesIO
-import os
-
-def get_logo_base64(path, size=32):
-    img = Image.open(path)
-    img = img.resize((size, size), Image.Resampling.LANCZOS)
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode()
-
-import streamlit as st
-import base64
-from PIL import Image
-from io import BytesIO
-
-def get_logo_base64(path="optra_logo_transparent.png", size=32):
+# ----------------------------
+# Load and embed OPTRA logo banner
+# ----------------------------
+def get_logo_base64(path="optra_logo_transparent.png", width=80):
     try:
         img = Image.open(path)
-        img = img.resize((size, size), Image.Resampling.LANCZOS)
+        img = img.resize((width, width), Image.Resampling.LANCZOS)
         buffer = BytesIO()
         img.save(buffer, format="PNG")
         return base64.b64encode(buffer.getvalue()).decode()
     except Exception as e:
+        st.error(f"Error loading logo image: {e}")
         return None
 
-def set_favicon():
-    logo_base64 = get_logo_base64()
-    if logo_base64:
-        st.markdown(
-            f"""
-            <link rel="icon" type="image/png" href="data:image/png;base64,{logo_base64}">
-            """,
-            unsafe_allow_html=True
-        )
+logo_base64 = get_logo_base64()
 
-# Call the function to apply the favicon
-set_favicon()
+if logo_base64:
+    st.markdown(
+        f"""
+        <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
+            <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
+            <div>
+                <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+else:
+    st.write("# OPTRA")  # fallback text if logo missing
 
 # ----------------------------
 # Styling
@@ -269,5 +227,3 @@ for grant in grants:
         st.markdown(link)
 
     st.markdown("---")
-
-
