@@ -78,31 +78,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ======= Styling (reuse your existing style blocks) =======
-st.markdown("""
-    <style>
-        html, body, [data-testid="stAppViewContainer"] {
-            background: linear-gradient(to bottom, #0a0a0a 0%, #0a0a0a 10%, #0d0f1c 30%, #0f111f 60%, #00011d 100%) !important;
-            color: #ffffff;
-        }
-        .block-container { background-color: rgba(0, 0, 0, 0) !important; }
-        input, textarea, select {
-            background-color: #111729 !important;
-            color: #ffffff !important;
-            border: 1px solid #2b3a5e !important;
-        }
-        ::placeholder { color: #888 !important; }
-        button[kind="primary"] {
-            background-color: #3e6ce2 !important;
-            color: white !important;
-            border-radius: 8px !important;
-        }
-        h1, h2, h3 {
-            text-shadow: 0 0 4px rgba(0,0,0,0.4);
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # ========== App Title ==========
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
@@ -123,7 +98,7 @@ with st.form("sme_form"):
 # ========== Generate Plan ==========
 if submitted and company_name:
     st.markdown("---")
-    st.subheader(f"📋 Next Steps for {grant}")
+    st.subheader(f"Next Steps for {grant}")
 
     roadmap = {
         "Enterprise Development Grant (EDG)": [
@@ -148,12 +123,40 @@ if submitted and company_name:
         ]
     }
 
-    st.markdown("### 📌 Your Action Checklist")
+    st.markdown("### Your Action Checklist")
     for item in roadmap.get(grant, []):
         st.checkbox(item, value=False)
 
+    # ========== Grant-Specific Document Checklist ==========
+    st.markdown("### Grant-Specific Document Checklist")
+    doc_checklist = {
+        "Enterprise Development Grant (EDG)": [
+            "ACRA Bizfile",
+            "Audited Financial Statements (last 2 years)",
+            "Project Proposal Document",
+            "Vendor Quotation",
+            "Company's Financial Projections"
+        ],
+        "Productivity Solutions Grant (PSG)": [
+            "ACRA Bizfile",
+            "Pre-approved Vendor Quotation",
+            "Screenshots of Quoted IT Solution",
+            "Purchase Order (if applicable)",
+            "Product Brochure / Specs Sheet"
+        ],
+        "Market Readiness Assistance (MRA)": [
+            "ACRA Bizfile",
+            "Vendor Quotation",
+            "Proposed Marketing Plan",
+            "Proof of Overseas Market Interest",
+            "Company Bank Statement"
+        ]
+    }
+    for doc in doc_checklist.get(grant, []):
+        st.checkbox(doc, value=False)
+
     # ========== Email Templates ==========
-    st.markdown("### 📧 Email Templates")
+    st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
     vendor_email = f"""
 Dear [Vendor Name],
