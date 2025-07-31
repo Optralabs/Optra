@@ -31,7 +31,7 @@ logo_base64 = get_logo_base64("optra_logo_transparent.png")
 
 st.markdown(
     f"""
-    <div class='logo-container' style='display: flex; align-items: flex-start; margin-bottom: 2rem; margin-top: 3rem;'>
+    <div class='logo-container' style='display: flex; align-items: flex-start; margin-bottom: 2rem; margin-top: 4.5rem;'>
         <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px; max-height: 80px; display: block;' />
         <div>
             <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
