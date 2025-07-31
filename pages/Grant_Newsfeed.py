@@ -5,14 +5,24 @@ from PIL import Image
 from io import BytesIO
 import base64
 from datetime import datetime
+import urllib.parse
+
+# Set page config once at the very top
+st.set_page_config(
+    page_title="Smart Grant Advisor",
+    page_icon="favicon.ico",  # You can keep your favicon file name here
+    layout="wide"
+)
 
 # ----------------------------
-# Load and embed OPTRA logo (fixed to avoid cutoff)
+# Load and embed OPTRA logo with fix
 # ----------------------------
-
 def get_logo_base64(path, width=80):
     img = Image.open(path)
-    img = img.resize((width, width), Image.Resampling.LANCZOS)
+    # Preserve aspect ratio on resize
+    w_percent = (width / float(img.size[0]))
+    h_size = int((float(img.size[1]) * float(w_percent)))
+    img = img.resize((width, h_size), Image.Resampling.LANCZOS)
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode()
@@ -21,12 +31,17 @@ logo_base64 = get_logo_base64("optra_logo_transparent.png")
 
 st.markdown(
     f"""
-    <div style='display: flex; align-items: center; margin-bottom: 2rem;'>
-        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
+    <div class='logo-container' style='display: flex; align-items: flex-start; margin-bottom: 2rem; margin-top: 1.5rem;'>
+        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px; max-height: 80px; display: block;' />
         <div>
             <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
         </div>
     </div>
+    <style>
+      .logo-container {{
+        overflow: visible !important;
+      }}
+    </style>
     """,
     unsafe_allow_html=True
 )
@@ -72,7 +87,6 @@ st.markdown("---")
 # News Scraper
 # ----------------------------
 def fetch_news_headlines(grant_name, max_articles=3):
-    import urllib.parse
     query = urllib.parse.quote(grant_name + " Singapore")
     rss_url = f"https://www.bing.com/news/search?q={query}&format=RSS"
     feed = feedparser.parse(rss_url)
