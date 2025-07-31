@@ -197,28 +197,52 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     fig = generate_clean_timeline(st.session_state.selected_grant)
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("### Email Templates")
-    st.markdown("**To Vendor (Quotation Request):**")
-    st.code(f"""Dear [Vendor Name],
+# ========= AI Email Generator =========
+if st.session_state.plan_generated and st.session_state.selected_grant:
+    st.markdown("### 📬 AI-Powered Email Generator")
 
-I am reaching out on behalf of {st.session_state.company_name} regarding a quotation for a project we are planning to apply under the {st.session_state.selected_grant}. 
+    email_purpose = st.selectbox(
+        "Select Email Purpose",
+        [
+            "Request for quotation from vendor",
+            "Clarify grant requirements with officer",
+            "Follow-up on pending response",
+            "Submit supporting documents",
+            "Custom: Write your own"
+        ]
+    )
 
-Could you please share a formal quote including project scope and pricing?
+    additional_context = st.text_area(
+        "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
+    )
 
-Thank you,
-{st.session_state.contact_person}""", language="text")
+    if st.button("Generate Email"):
+        with st.spinner("Composing your email..."):
+            try:
+                prompt = f"""Generate a concise, professional email for the following scenario:
 
-    st.markdown("**To Grant Officer (Clarification):**")
-    st.code(f"""Dear Grant Officer,
+- Purpose: {email_purpose}
+- Company: {st.session_state.company_name}
+- Contact Person: {st.session_state.contact_person}
+- Grant: {st.session_state.selected_grant}
+- Email: {st.session_state.email}
+- Additional Context: {additional_context if additional_context else "None"}
 
-I am currently preparing an application for the {st.session_state.selected_grant} on behalf of {st.session_state.company_name}. 
+Keep it formal, polite, and ready to send."""
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a business writing assistant that drafts grant-related emails."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.6,
+                    max_tokens=500
+                )
+                generated_email = response.choices[0].message.content.strip()
+                st.text_area("Generated Email", value=generated_email, height=200)
+            except Exception as e:
+                st.error("Failed to generate email. Please check your OpenAI key or try again.")
 
-Could I clarify the required documents and eligibility details before submission?
-
-Looking forward to your response.
-
-Best regards,
-{st.session_state.contact_person} ({st.session_state.email})""", language="text")
 
     st.success("Application Planner Ready. Begin your preparation today.")
 
