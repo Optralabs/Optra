@@ -241,23 +241,25 @@ Best regards,
     st.success("Application Planner Ready. Begin your preparation today.")
     
 # ===== Reset Planner Handling =====
-if "reset_triggered" not in st.session_state:
-    st.session_state.reset_triggered = False
+if "trigger_reset" not in st.session_state:
+    st.session_state.trigger_reset = False
 
 def perform_reset():
+    # Clear all planner-related keys
     keys_to_clear = [key for key in st.session_state.keys() if key.startswith("checklist_") or key.startswith("doccheck_")]
     keys_to_clear += ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]
     for key in keys_to_clear:
         st.session_state.pop(key, None)
-    st.session_state.reset_triggered = False  # allow reset again in future
+    st.session_state.trigger_reset = False 
 
-if st.session_state.get("plan_generated") and not st.session_state.reset_triggered:
+# Show the button only when there's a plan generated
+if st.session_state.get("plan_generated", False):
     if st.button("Reset Planner"):
-        st.session_state.reset_triggered = True
-        st.experimental_rerun()
+        st.session_state.trigger_reset = True
 
-# This block safely runs AFTER rerun
-if st.session_state.get("reset_triggered", False):
+# Perform reset after the next script run (cleanly)
+if st.session_state.get("trigger_reset", False):
     perform_reset()
+    st.experimental_rerun() 
 
 
