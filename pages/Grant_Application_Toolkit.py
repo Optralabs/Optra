@@ -207,6 +207,8 @@ Best regards,
     st.markdown("---")
     st.success("Application Planner Ready. Begin your preparation today.")
 
+# ====== Reset logic ======
+
 if "trigger_reset" not in st.session_state:
     st.session_state.trigger_reset = False
 
@@ -215,11 +217,8 @@ def perform_reset():
     keys_to_clear += ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]
     for k in keys_to_clear:
         st.session_state.pop(k, None)
-    st.session_state.trigger_reset = False
+    # No rerun needed, reset is now immediate
 
 if st.session_state.get("plan_generated"):
     if st.button("Reset Planner"):
-        st.session_state.trigger_reset = True
-
-if st.session_state.get("trigger_reset"):
-    perform_reset()
+        perform_reset()
