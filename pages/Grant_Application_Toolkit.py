@@ -177,22 +177,20 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
 
-    st.markdown("### Visual Grant Timeline")
-    timeline_data = generate_timeline_data(st.session_state.selected_grant)
+st.markdown("### Visual Grant Timeline")
 
-    # --- DEBUG: show raw data to confirm ---
-    st.write(timeline_data)
+# Use the same generated timeline data
+timeline_data = generate_timeline_data(st.session_state.selected_grant)
 
-    # Only render timeline if events exist and are valid
-    if timeline_data.get("events") and all(
-        isinstance(e.get("start"), str) and len(e.get("start")) == 10 for e in timeline_data["events"]
-    ):
-        try:
-            timeline(timeline_data, height=300)
-        except Exception as e:
-            st.error(f"Failed to load timeline: {e}")
-    else:
-        st.warning("Timeline data invalid or empty, cannot render timeline.")
+# Show the raw timeline data (for debug)
+st.write(timeline_data)
+
+# Minimal timeline call - direct use of timeline component
+try:
+    timeline(timeline_data, height=350)
+except Exception as e:
+    st.error(f"Error rendering timeline: {e}")
+
 
     st.markdown("### Email Templates")
     st.markdown("**To Vendor (Quotation Request):**")
