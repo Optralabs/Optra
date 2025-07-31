@@ -10,3 +10,4 @@ PyMuPDF
 streamlit-extras
 reportlab
 streamlit-timeline
+feedparser
