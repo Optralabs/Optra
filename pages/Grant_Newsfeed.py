@@ -6,6 +6,10 @@ from io import BytesIO
 import base64
 from datetime import datetime
 
+# ----------------------------
+# Load and embed OPTRA logo
+# ----------------------------
+
 # Favicon and layout config (MUST come first)
 st.set_page_config(
     page_title="Smart Grant Advisor",
@@ -13,30 +17,34 @@ st.set_page_config(
     layout="wide"
 )
 
-# Your existing OPTRA logo banner (no changes needed)
-def get_logo_base64(path, size=80):
-    img = Image.open(path)
-    wpercent = (size / float(img.size[0]))
-    hsize = int((float(img.size[1]) * float(wpercent)))
-    img = img.resize((size, hsize), Image.Resampling.LANCZOS)
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode()
+# Function to get base64 of logo
+def get_logo_base64(path, size=160):
+    try:
+        img = Image.open(path)
+        img = img.resize((size, size), Image.Resampling.LANCZOS)
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode()
+    except Exception as e:
+        return None
 
-logo_base64 = get_logo_base64("optra_logo_transparent.png", size=80)
+logo_base64 = get_logo_base64("optra_logo_transparent.png", size=160)
 
+# Display logo banner with fixed cutoff issue
 st.markdown(
     f"""
-    <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
+    <div style='display: flex; align-items: center; margin-bottom: 0.5rem; height: auto; overflow: visible;'>
+        <img src='data:image/png;base64,{logo_base64}' 
+             style='max-width: 160px; height: auto; object-fit: contain; margin-right: 15px;' />
         <div>
-            <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
+            <h1 style='margin: 0; font-size: 1.8rem; line-height: 1.2;'>OPTRA</h1>
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
+# Function to set favicon (optional)
 def set_favicon():
     logo_base64_fav = get_logo_base64("optra_logo_transparent.png", size=32)
     if logo_base64_fav:
