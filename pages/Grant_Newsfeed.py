@@ -7,44 +7,52 @@ import base64
 from datetime import datetime
 
 # ----------------------------
-# Set page config with favicon (only once, at top)
+# Load and embed OPTRA logo
 # ----------------------------
+
+# Favicon and layout config (MUST come first)
 st.set_page_config(
     page_title="Smart Grant Advisor",
     page_icon=Image.open("optra_logo_transparent.png"),
     layout="wide"
 )
 
-# ----------------------------
-# Load and embed OPTRA logo banner
-# ----------------------------
-def get_logo_base64(path="optra_logo_transparent.png", width=80):
-    try:
-        img = Image.open(path)
-        img = img.resize((width, width), Image.Resampling.LANCZOS)
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        return base64.b64encode(buffer.getvalue()).decode()
-    except Exception as e:
-        st.error(f"Error loading logo image: {e}")
-        return None
+# Updated function: preserve aspect ratio when resizing logo
+def get_logo_base64(path, width=80):
+    img = Image.open(path)
+    wpercent = (width / float(img.size[0]))
+    hsize = int((float(img.size[1]) * float(wpercent)))
+    img = img.resize((width, hsize), Image.Resampling.LANCZOS)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
 
-logo_base64 = get_logo_base64()
+logo_base64 = get_logo_base64("optra_logo_transparent.png")
 
-if logo_base64:
-    st.markdown(
-        f"""
-        <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-            <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
-            <div>
-                <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
-            </div>
+st.markdown(
+    f"""
+    <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
+        <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px; height: auto; object-fit: contain;' />
+        <div>
+            <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
-else:
-    st.write("# OPTRA")  # fallback text if logo missing
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Set favicon via base64 (unchanged)
+def set_favicon():
+    logo_base64_fav = get_logo_base64("optra_logo_transparent.png", size=32)
+    if logo_base64_fav:
+        st.markdown(
+            f"""
+            <link rel="icon" type="image/png" href="data:image/png;base64,{logo_base64_fav}">
+            """,
+            unsafe_allow_html=True
+        )
+
+set_favicon()
 
 # ----------------------------
 # Styling
