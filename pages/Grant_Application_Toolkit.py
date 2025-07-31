@@ -209,16 +209,12 @@ Best regards,
 
 # ====== Reset logic ======
 
-if "trigger_reset" not in st.session_state:
-    st.session_state.trigger_reset = False
-
 def perform_reset():
     keys_to_clear = [k for k in st.session_state if k.startswith("checklist_") or k.startswith("doccheck_")]
     keys_to_clear += ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]
     for k in keys_to_clear:
         st.session_state.pop(k, None)
-    # No rerun needed, reset is now immediate
 
 if st.session_state.get("plan_generated"):
-    if st.button("Reset Planner"):
-        perform_reset()
+    st.button("Reset Planner", on_click=perform_reset)
+
