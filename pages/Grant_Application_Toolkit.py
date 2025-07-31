@@ -3,6 +3,7 @@ from datetime import datetime
 from streamlit_extras.stylable_container import stylable_container
 import streamlit.components.v1 as components
 import openai
+from streamlit_timeline import timeline
 
 # Setup OpenAI Key
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -94,12 +95,12 @@ roadmap = {
         "Get official quotation from a third-party consultant/vendor",
         "Ensure business is at least 30% locally owned"
     ],
-    "SkillsFuture Enterprise Credit (SFEC)": [
-        "Ensure at least 3 local employees (CPF-contributing)",
-        "Verify $750+ SkillsFuture claim usage over relevant period",
-        "Check UEN qualifies for SFEC top-up",
-        "Choose eligible courses or solutions",
-        "Submit reimbursement claims after approved training"
+    "Market Readiness Assistance (MRA)": [
+        "Confirm overseas market you intend to enter",
+        "Gather quotations from third-party vendors (e.g., marketing, business matching)",
+        "Ensure service providers are not related to your company",
+        "Draft a marketing/expansion plan specific to overseas market",
+        "Submit MRA application via Business Grants Portal before incurring expenses"
     ]
 }
 
@@ -175,6 +176,30 @@ if st.session_state.plan_generated:
     for i, doc in enumerate(docs):
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
         st.checkbox(doc, key=checkbox_key)
+
+for i, doc in enumerate(docs):
+    checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
+    st.checkbox(doc, key=checkbox_key)
+    
+# ========== Visual Timeline ==========
+st.markdown("### Visual Grant Timeline")
+
+timeline_events = []
+
+for item in checklist_items:
+    timeline_events.append({
+        "content": item,
+        "start": datetime.now().strftime("%Y-%m-%d"),
+        "type": "box"
+    })
+
+timeline_data = {
+    "title": f"{st.session_state.selected_grant} Preparation Timeline",
+    "items": timeline_events
+}
+
+timeline(timeline_data, height=300)
+
 
     # ========== Email Templates ==========
     st.markdown("### Email Templates")
