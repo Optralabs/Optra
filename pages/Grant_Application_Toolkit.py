@@ -180,36 +180,45 @@ if submitted and company_name:
     for doc in doc_checklist.get(grant, []):
         st.checkbox(doc, value=False)
 
-# Setup session state for checklist
-if "checklist_state" not in st.session_state:
-    st.session_state.checklist_state = {}
+# Initialize session state variable on first load
+if "plan_generated" not in st.session_state:
+    st.session_state.plan_generated = False
 
-if "active_grant" not in st.session_state:
-    st.session_state.active_grant = grant
+# Your grant selection form (example, adjust variable names as needed)
+with st.form("sme_form"):
+    selected_grant = st.selectbox("Select a Grant", [
+        "Enterprise Development Grant (EDG)",
+        "Productivity Solutions Grant (PSG)",
+        "Market Readiness Assistance (MRA)"
+    ])
+    company_name = st.text_input("Company Name")
+    contact_person = st.text_input("Contact Person")
+    email = st.text_input("Email")
+    submitted = st.form_submit_button("Generate Application Guide")
 
-# Detect grant change and reset if needed
-if grant != st.session_state.active_grant:
-    st.session_state.checklist_state = {}  # reset checklist for new grant
-    st.session_state.active_grant = grant
+# When user submits form, set plan_generated to True
+if submitted and company_name:
+    st.session_state.plan_generated = True
 
-checklist_items = roadmap.get(grant, [])
-st.markdown("### 📌 Your Action Checklist")
+# Show checklist only if plan has been generated
+if st.session_state.plan_generated and selected_grant:
+    st.markdown("---")
+    st.subheader(f"Grant-Specific Document Checklist for {selected_grant}")
 
-for i, item in enumerate(checklist_items):
-    key = f"{grant}_{i}"
-    if key not in st.session_state.checklist_state:
-        st.session_state.checklist_state[key] = False
-    st.session_state.checklist_state[key] = st.checkbox(
-        item,
-        value=st.session_state.checklist_state[key],
-        key=key
-    )
+    checklist_items = roadmap.get(selected_grant, [])
 
-# Add Reset Button
-if st.button("🔁 Reset Checklist"):
-    for i in range(len(checklist_items)):
-        key = f"{grant}_{i}"
-        st.session_state.checklist_state[key] = False
+    for i, item in enumerate(checklist_items):
+        # Use a unique key per grant + item index to keep checkbox state
+        checkbox_key = f"{selected_grant}_checklist_{i}"
+        st.checkbox(item, key=checkbox_key)
+
+    # Add Reset button to clear checkboxes and form state
+    if st.button("Reset Planner"):
+        for key in st.session_state.keys():
+            if key.startswith(selected_grant + "_checklist_") or key == "plan_generated":
+                del st.session_state[key]
+        st.session_state.plan_generated = False
+        st.experimental_rerun()
 
 
     # ========== Email Templates ==========
@@ -243,6 +252,6 @@ Best regards,
     st.code(officer_email.strip(), language="text")
 
     st.markdown("---")
-    st.success("✅ Application Planner Ready. Begin your preparation today.")
+    st.success("Application Planner Ready. Begin your preparation today.")
 
 st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
