@@ -5,7 +5,7 @@ import openai
 from PIL import Image
 import base64
 from io import BytesIO
-import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -142,21 +142,42 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ========= Timeline Data Preparation Using Plotly =========
-def generate_timeline_df(grant_name):
-    checklist_items = roadmap.get(grant_name, [])
+# ========= Timeline Data Preparation (Improved Plotly Timeline) =========
+def generate_clean_timeline(grant_name):
+    checklist = roadmap.get(grant_name, [])
     base_date = datetime.today()
-    data = []
-    for i, item in enumerate(checklist_items):
-        start_date = base_date + timedelta(days=i)
-        end_date = start_date + timedelta(days=1)  # assume 1 day per task
-        data.append({
-            "Task": item,
-            "Start": start_date,
-            "Finish": end_date,
-            "Grant": grant_name
-        })
-    return pd.DataFrame(data)
+    start_dates = [base_date + timedelta(days=i * 2) for i in range(len(checklist))]
+    end_dates = [d + timedelta(days=1) for d in start_dates]
+
+    df = pd.DataFrame({
+        "Task": checklist,
+        "Start": start_dates,
+        "Finish": end_dates
+    })
+
+    fig = go.Figure()
+
+    for i, row in df.iterrows():
+        fig.add_trace(go.Bar(
+            x=[(row["Finish"] - row["Start"]).days],
+            y=[row["Task"]],
+            orientation='h',
+            base=(row["Start"]),
+            marker=dict(color="#3e6ce2"),
+            hovertemplate=f"<b>{row['Task']}</b><br>Start: {row['Start'].strftime('%b %d')}<br>Finish: {row['Finish'].strftime('%b %d')}<extra></extra>"
+        ))
+
+    fig.update_layout(
+        height=400,
+        margin=dict(l=40, r=40, t=40, b=40),
+        title=f"{grant_name} Task Timeline",
+        xaxis=dict(title="Date", type="date", showgrid=True),
+        yaxis=dict(title="", automargin=True),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="white"),
+    )
+    return fig
 
 # ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
@@ -177,20 +198,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         st.checkbox(doc, key=checkbox_key)
 
     st.markdown("### Visual Grant Timeline")
-
-    timeline_df = generate_timeline_df(st.session_state.selected_grant)
-
-    fig = px.timeline(
-        timeline_df,
-        x_start="Start",
-        x_end="Finish",
-        y="Task",
-        color="Grant",
-        title=f"{st.session_state.selected_grant} Preparation Timeline"
-    )
-    fig.update_yaxes(autorange="reversed")  # Tasks top-down
-    fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=350)
-
+    fig = generate_clean_timeline(st.session_state.selected_grant)
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("### Email Templates")
@@ -223,7 +231,6 @@ def perform_reset():
     for key in list(st.session_state.keys()):
         if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
             del st.session_state[key]
-    # No st.rerun() as it's a no-op in callback
 
 if st.session_state.get("plan_generated"):
     st.button("Reset Planner", on_click=perform_reset)
