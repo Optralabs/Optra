@@ -94,13 +94,13 @@ def score_grant_match(grant, sector, revenue, staff_count, goal):
     if grant['sectors']:
         if sector and sector.lower() in [s.lower() for s in grant['sectors']]:
             score += 25
-            reasons.append("✔️ Sector is eligible.")
+            reasons.append("✔️Sector is eligible.")
         else:
             reasons.append("❌ Sector mismatch.")
     else:
         # No sector restriction = partial credit
         score += 10
-        reasons.append("ℹ️ No sector restriction.")
+        reasons.append("No sector restriction.")
 
     # Revenue check
     max_revenue = grant.get('max_revenue')
@@ -112,7 +112,7 @@ def score_grant_match(grant, sector, revenue, staff_count, goal):
             reasons.append(f"❌ Revenue > ${max_revenue:,}.")
     else:
         score += 10
-        reasons.append("ℹ️ No revenue cap.")
+        reasons.append("No revenue cap.")
 
     # Staff check
     max_staff = grant.get('max_staff')
@@ -124,7 +124,7 @@ def score_grant_match(grant, sector, revenue, staff_count, goal):
             reasons.append(f"❌ Staff count > {max_staff}.")
     else:
         score += 10
-        reasons.append("ℹ️ No staff cap.")
+        reasons.append("No staff cap.")
 
     # Business goal check
     if goal:
@@ -134,7 +134,7 @@ def score_grant_match(grant, sector, revenue, staff_count, goal):
         else:
             reasons.append("❌ Business goal does not align.")
     else:
-        reasons.append("ℹ️ No business goal specified.")
+        reasons.append("No business goal specified.")
 
     return min(score, 100), reasons
 
@@ -181,7 +181,7 @@ def generate_pdf(sector, revenue, staff_count, goal, matches):
     return buffer
 
 # ========== Streamlit UI ==========
-st.title("📊 Live Grant Insights")
+st.title("Live Grant Insights")
 st.markdown("Get real-time insights into which grants best match your business profile.")
 
 with st.form("sme_form"):
@@ -223,10 +223,10 @@ if submitted:
 
     # PDF Download
     if matches:
-        st.markdown("#### 📄 Downloadable PDF Report")
+        st.markdown("#### Downloadable PDF Report")
         if st.button("Generate PDF Report"):
             pdf_file = generate_pdf(sector, revenue, staff_count, goal, matches)
-            st.download_button("📥 Download Report", data=pdf_file, file_name="Grant_Report.pdf", mime="application/pdf")
+            st.download_button("Download Report", data=pdf_file, file_name="Grant_Report.pdf", mime="application/pdf")
 
 # ========== Quick Links Always Visible ==========
 st.markdown("---")
