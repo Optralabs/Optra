@@ -142,40 +142,36 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ========= Timeline Data Preparation (Improved Plotly Timeline) =========
+# ========= Timeline Data Preparation (Horizontal Timeline using Bar Chart) =========
 def generate_clean_timeline(grant_name):
     checklist = roadmap.get(grant_name, [])
     base_date = datetime.today()
-    start_dates = [base_date + timedelta(days=i * 2) for i in range(len(checklist))]
-    end_dates = [d + timedelta(days=1) for d in start_dates]
-
     df = pd.DataFrame({
         "Task": checklist,
-        "Start": start_dates,
-        "Finish": end_dates
+        "Start": [base_date + timedelta(days=i * 2) for i in range(len(checklist))],
     })
+    df["Finish"] = df["Start"] + timedelta(days=1)
 
     fig = go.Figure()
-
-    for i, row in df.iterrows():
+    for _, row in df.iterrows():
         fig.add_trace(go.Bar(
-            x=[(row["Finish"] - row["Start"]).days],
             y=[row["Task"]],
+            x=[(row["Finish"] - row["Start"]).days],
             orientation='h',
-            base=(row["Start"]),
+            base=row["Start"],
             marker=dict(color="#3e6ce2"),
             hovertemplate=f"<b>{row['Task']}</b><br>Start: {row['Start'].strftime('%b %d')}<br>Finish: {row['Finish'].strftime('%b %d')}<extra></extra>"
         ))
 
     fig.update_layout(
+        title=f"{grant_name} Timeline",
         height=400,
-        margin=dict(l=40, r=40, t=40, b=40),
-        title=f"{grant_name} Task Timeline",
+        margin=dict(l=20, r=20, t=50, b=20),
         xaxis=dict(title="Date", type="date", showgrid=True),
         yaxis=dict(title="", automargin=True),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="white"),
+        font=dict(color="white")
     )
     return fig
 
