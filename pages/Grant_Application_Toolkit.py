@@ -232,9 +232,13 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     st.markdown("")  # More vertical space
 
     st.markdown("### Visual Grant Timeline")
-    fig = generate_gantt_timeline(st.session_state.selected_grant)
-    st.plotly_chart(fig, use_container_width=True)
+    fig = generate_gantt_timeline(
+        st.session_state.selected_grant,
+        submission_date,
+        include_buffer
+    )
 
+    st.plotly_chart(fig, use_container_width=True)
 
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
