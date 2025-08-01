@@ -181,12 +181,11 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
         yaxis=dict(
             autorange='reversed',
             tickfont=dict(size=13),
-            title='Tasks',
-            titlefont=dict(size=14),
+            title=dict(text='Tasks', font=dict(size=14)),
             gridcolor='rgba(255,255,255,0.1)',
         ),
         xaxis=dict(
-            title='Date',
+            title=dict(text='Date'),
             tickformat='%b %d',
             gridcolor='rgba(255,255,255,0.1)',
             zeroline=False,
