@@ -213,7 +213,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
         ]
     )
 
-    recipient_name = st.text_input("Recipient Name", placeholder="e.g. Mr Tan or Grants Officer")
+    recipient_name = st.text_input("Recipient Name", placeholder="e.g. Write Contact Name Here")
     recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
     
     additional_context = st.text_area(
