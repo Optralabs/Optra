@@ -222,12 +222,13 @@ def render_checklist(title, items, key_prefix):
 
             st.markdown(
                 f"""
-                <div style="background-color:#f1f3f4; padding:1rem; border-radius:8px; margin-bottom:0.5rem; max-width:90%;">
-                <strong>Explanation:</strong><br>{st.session_state[f"{toggle_key}_text"]}
+                <div style="background-color:#111729; color: #ffffff; padding:1rem; border-radius:8px; margin-top:0.5rem; margin-bottom:1rem; max-width:90%;">
+                    <strong style="color: #8ab4f8;">Explanation:</strong><br>{st.session_state[f"{toggle_key}_text"]}
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
 
             if st.button("Close explanation", key=f"{toggle_key}_close"):
                 st.session_state[toggle_key] = False
