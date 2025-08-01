@@ -213,36 +213,44 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
         ]
     )
 
+    recipient_name = st.text_input("Recipient Name", placeholder="e.g. Mr Tan or Grants Officer")
+    recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
+    
     additional_context = st.text_area(
         "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
     )
 
     if st.button("Generate Email"):
-        with st.spinner("Composing your email..."):
-            try:
-                prompt = f"""Generate a concise, professional email for the following scenario:
+        if not recipient_name or not recipient_email:
+            st.warning("Please provide both recipient name and recipient email.")
+        else:
+            with st.spinner("Composing your email..."):
+                try:
+                    prompt = f"""Compose a professional, concise email.
 
+Details:
 - Purpose: {email_purpose}
+- Sender: {st.session_state.contact_person} ({st.session_state.email})
 - Company: {st.session_state.company_name}
-- Contact Person: {st.session_state.contact_person}
 - Grant: {st.session_state.selected_grant}
-- Email: {st.session_state.email}
+- Recipient: {recipient_name} ({recipient_email})
 - Additional Context: {additional_context if additional_context else "None"}
 
-Keep it formal, polite, and ready to send."""
-                response = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a business writing assistant that drafts grant-related emails."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.6,
-                    max_tokens=500
-                )
-                generated_email = response.choices[0].message.content.strip()
-                st.text_area("Generated Email", value=generated_email, height=200)
-            except Exception as e:
-                st.error(f"Failed to generate email. Error: {e}")
+Write this as an email from the sender to the recipient. Include a clear subject line, greeting, and closing."""
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[
+                            {"role": "system", "content": "You are a business writing assistant that drafts formal emails for grant processes."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.6,
+                        max_tokens=500
+                    )
+                    generated_email = response.choices[0].message.content.strip()
+                    st.text_area("Generated Email", value=generated_email, height=200)
+                except Exception as e:
+                    st.error(f"Failed to generate email. Error: {e}")
+
 
 # ========= Reset Button =========
 def perform_reset():
