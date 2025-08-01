@@ -192,33 +192,50 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     return fig
 
 def render_checklist(title, items, key_prefix):
-    if title:
-        st.markdown(f"### {title}")
-    for i, item in enumerate(items):
-        checkbox_key = f"{key_prefix}_checkbox_{i}"
-        explain_button_key = f"{key_prefix}_explain_{i}"
+    st.subheader(title)
+    for idx, item in enumerate(items):
+        item_key = f"{key_prefix}_item_{idx}"
+        explain_key = f"{key_prefix}_explain_{idx}"
+        toggle_key = f"{key_prefix}_toggle_{idx}"
 
-        cols = st.columns([0.7, 0.3])
-        with cols[0]:
-            st.checkbox(str(item), key=checkbox_key)
-        with cols[1]:
-            if st.button("Explain", key=explain_button_key):
-                try:
-                    with st.spinner("Fetching explanation..."):
-                        explain_prompt = f"Explain the task '{item}' for the {st.session_state.selected_grant} grant. Give a simple, SME-friendly breakdown of what it means and how to complete it."
-                        response = client.chat.completions.create(
-                            model="gpt-4",
-                            messages=[
-                                {"role": "system", "content": "You are a helpful assistant that explains Singapore grant application tasks in simple terms."},
-                                {"role": "user", "content": explain_prompt}
-                            ],
-                            temperature=0.5,
-                            max_tokens=300
-                        )
-                        explanation = response.choices[0].message.content.strip()
-                        st.info(explanation)
-                except Exception as e:
-                    st.error(f"Failed to fetch explanation: {e}")
+        # Render the checklist checkbox
+        st.checkbox(item, key=item_key)
+
+        # Explain button
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            if st.button("Explain", key=explain_key):
+                st.session_state[toggle_key] = not st.session_state.get(toggle_key, False)
+
+        # If explanation is open
+        if st.session_state.get(toggle_key):
+            with st.spinner("Generating explanation..."):
+                # Call OpenAI API only if explanation not already stored
+                if f"{toggle_key}_text" not in st.session_state:
+                    response = openai.ChatCompletion.create(
+                        model="gpt-4",
+                        messages=[
+                            {"role": "system", "content": "You are an expert grant consultant helping simplify tasks."},
+                            {"role": "user", "content": f"Explain and simplify this grant application task: '{item}'"}
+                        ],
+                        temperature=0.5,
+                        max_tokens=300
+                    )
+                    st.session_state[f"{toggle_key}_text"] = response['choices'][0]['message']['content']
+
+            # Display explanation
+            st.markdown(
+                f"""
+                <div style="background-color:#f1f3f4; padding:1rem; border-radius:8px; margin-bottom:0.5rem; max-width:90%;">
+                <strong>Explanation:</strong><br>{st.session_state[f"{toggle_key}_text"]}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # Close explanation button
+            if st.button("Close explanation", key=f"{toggle_key}_close"):
+                st.session_state[toggle_key] = False
 
 
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
