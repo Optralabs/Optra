@@ -7,6 +7,7 @@ import base64
 from io import BytesIO
 import plotly.figure_factory as ff
 import pandas as pd
+import os
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -190,6 +191,9 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
         )
     )
     return fig
+
+import openai
+import os
 
 def render_checklist(title, items, key_prefix):
     st.subheader(title)
