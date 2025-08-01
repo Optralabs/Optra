@@ -154,7 +154,7 @@ def generate_gantt_timeline(grant_name):
     )
 
     fig.update_layout(
-        plot_bgcolor='#0a0a0a',  # Dark background consistent with app
+        plot_bgcolor='#0a0a0a', 
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
         margin=dict(l=120, r=40, t=60, b=40)
@@ -164,7 +164,8 @@ def generate_gantt_timeline(grant_name):
 # ========= Planner UI Output =========
 
 def render_checklist(title, items, key_prefix):
-    st.markdown(f"### {title}")
+    if title: 
+        st.markdown(f"### {title}")
     for i, item in enumerate(items):
         checkbox_key = f"{key_prefix}_{i}"
         st.checkbox(str(item), key=checkbox_key)
