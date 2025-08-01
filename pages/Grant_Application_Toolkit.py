@@ -128,8 +128,8 @@ if "selected_grant" not in st.session_state:
 with st.form("sme_form"):
     selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
     company_name = st.text_input("Company Name")
-    contact_person = st.text_input("Contact Person")
-    email = st.text_input("Email")
+    contact_person = st.text_input("Your Name")
+    email = st.text_input("Your Email")
     submitted = st.form_submit_button("Generate Application Guide")
 
     if submitted and company_name.strip():
@@ -192,11 +192,34 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     return fig
 
 def render_checklist(title, items, key_prefix):
-    if title: 
+    if title:
         st.markdown(f"### {title}")
     for i, item in enumerate(items):
-        checkbox_key = f"{key_prefix}_{i}"
-        st.checkbox(str(item), key=checkbox_key)
+        checkbox_key = f"{key_prefix}_checkbox_{i}"
+        explain_button_key = f"{key_prefix}_explain_{i}"
+
+        cols = st.columns([0.7, 0.3])
+        with cols[0]:
+            st.checkbox(str(item), key=checkbox_key)
+        with cols[1]:
+            if st.button("Explain", key=explain_button_key):
+                try:
+                    with st.spinner("Fetching explanation..."):
+                        explain_prompt = f"Explain the task '{item}' for the {st.session_state.selected_grant} grant. Give a simple, SME-friendly breakdown of what it means and how to complete it."
+                        response = client.chat.completions.create(
+                            model="gpt-4",
+                            messages=[
+                                {"role": "system", "content": "You are a helpful assistant that explains Singapore grant application tasks in simple terms."},
+                                {"role": "user", "content": explain_prompt}
+                            ],
+                            temperature=0.5,
+                            max_tokens=300
+                        )
+                        explanation = response.choices[0].message.content.strip()
+                        st.info(explanation)
+                except Exception as e:
+                    st.error(f"Failed to fetch explanation: {e}")
+
 
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
 
