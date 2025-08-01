@@ -70,15 +70,39 @@ st.markdown("""
 
 # ========= Data Structures =========
 roadmap = {
-    "Productivity Solutions Grant (PSG)": [...],
-    "Enterprise Development Grant (EDG)": [...],
-    "Market Readiness Assistance (MRA)": [...]
+    "Productivity Solutions Grant (PSG)": [
+        "Identify pre-approved vendor",
+        "Get a quotation",
+        "Submit application on Business Grants Portal"
+    ],
+    "Enterprise Development Grant (EDG)": [
+        "Define project scope",
+        "Prepare project proposal",
+        "Submit application on BGP"
+    ],
+    "Market Readiness Assistance (MRA)": [
+        "Identify overseas opportunity",
+        "Engage consultant or service provider",
+        "Submit application"
+    ]
 }
 
 doc_checklist = {
-    "Enterprise Development Grant (EDG)": [...],
-    "Productivity Solutions Grant (PSG)": [...],
-    "Market Readiness Assistance (MRA)": [...]
+    "Enterprise Development Grant (EDG)": [
+        "Audited Financial Statements",
+        "Project Proposal",
+        "Quotations from vendors"
+    ],
+    "Productivity Solutions Grant (PSG)": [
+        "Latest ACRA Bizfile",
+        "Vendor Quotation",
+        "Company Bank Statement"
+    ],
+    "Market Readiness Assistance (MRA)": [
+        "Company Registration Info",
+        "Overseas Marketing Plan",
+        "Quotation from Consultant"
+    ]
 }
 
 # ========= App State Setup =========
@@ -149,12 +173,12 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     st.markdown("### Your Action Checklist")
     for i, item in enumerate(checklist_items):
         checkbox_key = f"checklist_{st.session_state.selected_grant}_{i}"
-        st.checkbox(item, key=checkbox_key)
+        st.checkbox(str(item), key=checkbox_key)
 
     st.markdown("### Grant-Specific Document Checklist")
     for i, doc in enumerate(docs):
         checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
-        st.checkbox(doc, key=checkbox_key)
+        st.checkbox(str(doc), key=checkbox_key)
 
     st.markdown("### Visual Grant Timeline")
     fig = generate_clean_timeline(st.session_state.selected_grant)
@@ -166,7 +190,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
 
     email_purpose = st.selectbox(
         "Select Email Purpose",
-        [...]
+        ["Requesting Quotation", "Following Up", "Seeking Clarification"]
     )
 
     recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
@@ -180,13 +204,19 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
         else:
             with st.spinner("Composing your email..."):
                 try:
-                    prompt = f"""..."""  # omitted for brevity
-                    response = client.chat.completions.create(...)
+                    prompt = f"""Write a professional email to {recipient_name} ({recipient_email}) for the purpose of '{email_purpose}'. 
+                    Additional context: {additional_context}
+                    Signed off by {st.session_state.contact_person} from {st.session_state.company_name}.
+                    """
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.7
+                    )
                     generated_email = response.choices[0].message.content.strip()
                     st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
                     st.code(generated_email, language='markdown')
 
-                    # ✅ Updated copy to clipboard logic
                     st.button("Copy to Clipboard", on_click=lambda: st.query_params.update({"copy": generated_email}))
 
                 except Exception as e:
