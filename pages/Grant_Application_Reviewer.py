@@ -47,7 +47,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # === Page Title & Short Description ===
-st.title("Grant Document Checker")
+st.title("Grant Application Reviewer")
 st.markdown("""
 **Analyse your grant application with consultant‑level insights:**
 - Detect missing or weak sections instantly.
