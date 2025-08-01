@@ -84,6 +84,11 @@ roadmap = {
         "Identify overseas opportunity",
         "Engage consultant or service provider",
         "Submit application"
+    ],
+    "Startup SG Founder": [
+        "Attend mandatory workshop",
+        "Prepare business proposal",
+        "Submit through Accredited Mentor Partner"
     ]
 }
 
@@ -102,6 +107,11 @@ doc_checklist = {
         "Company Registration Info",
         "Overseas Marketing Plan",
         "Quotation from Consultant"
+    ],
+    "Startup SG Founder": [
+        "Pitch Deck",
+        "Mentor Endorsement",
+        "Workshop Certificate"
     ]
 }
 
@@ -227,82 +237,39 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
 
     st.plotly_chart(fig, use_container_width=True)
 
+    # Call OpenAI with dynamic analysis prompt for the selected grant
+    with st.expander("AI Grant Analysis"):
+        if st.button("Generate Insights for Application Success"):
+            with st.spinner("Analyzing grant insights..."):
+                try:
+                    dynamic_prompt = f"""
+You are a grant advisor. Analyze the key steps and document readiness for a company preparing to apply for the {st.session_state.selected_grant}. 
+Company: {st.session_state.company_name}. Contact: {st.session_state.contact_person} ({st.session_state.email}).
+Submission Target: {submission_date.strftime('%Y-%m-%d')}.
+Give:
+1. Common mistakes SMEs make in this grant.
+2. Personalized preparation tips.
+3. Key do's and don'ts to improve chances.
+"""
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[
+                            {"role": "system", "content": "You are an expert in Singapore government grant processes for SMEs."},
+                            {"role": "user", "content": dynamic_prompt}
+                        ],
+                        temperature=0.5,
+                        max_tokens=700
+                    )
+
+                    insight = response.choices[0].message.content.strip()
+                    st.text_area("Insights from AI Reviewer", value=insight, height=300)
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
 else:
     st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
 
 st.markdown("---")
-
-# ========= AI Email Generator =========
-if st.session_state.plan_generated and st.session_state.selected_grant:
-    st.markdown("### AI-Powered Email Generator")
-
-    email_purpose = st.selectbox(
-        "Select Email Purpose",
-        [
-            "Request for quotation from vendor",
-            "Clarify grant requirements with officer",
-            "Follow-up on pending response",
-            "Submit supporting documents",
-            "Appeal for rejected application",
-            "Request extension for submission",
-            "Request site visit schedule",
-            "Custom: Write your own"
-        ]
-    )
-
-    recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
-    recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
-
-    additional_context = st.text_area(
-        "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
-    )
-
-    if st.button("Generate Email"):
-        if not recipient_name or not recipient_email:
-            st.warning("Please provide both recipient name and recipient email.")
-        else:
-            with st.spinner("Composing your email..."):
-                try:
-                    prompt = f"""
-Compose a clear, professional, and customized email.
-
-Details:
-- Purpose: {email_purpose}
-- Sender Name: {st.session_state.contact_person}
-- Sender Email: {st.session_state.email}
-- Company: {st.session_state.company_name}
-- Grant of Interest: {st.session_state.selected_grant}
-- Recipient: {recipient_name} ({recipient_email})
-- Additional Info: {additional_context if additional_context else "None"}
-
-Ensure the tone is polite, helpful, and adapted to an SME context. Include:
-1. A clear subject line.
-2. Proper salutation.
-3. Introduction with the sender's role and company.
-4. Purpose and action needed.
-5. Optional context and request for follow-up.
-6. Signature block with name, company, and contact info.
-"""
-
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": "You are a business writing assistant that drafts formal, SME-friendly emails for government grant processes."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.6,
-                        max_tokens=600
-                    )
-
-                    generated_email = response.choices[0].message.content.strip()
-                    st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
-                    st.code(generated_email, language='markdown')
-
-                    st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
-
-                except Exception as e:
-                    st.error(f"Failed to generate email. Error: {e}")
-
 
 # ========= Reset Button =========
 def perform_reset():
