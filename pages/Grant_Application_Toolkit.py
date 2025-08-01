@@ -337,11 +337,10 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
                     st.code(generated_email, language='markdown')
 
-                    st.button("Copy to Clipboard", on_click=st.experimental_set_query_params, kwargs={"copy": generated_email})
+                    st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
 
                 except Exception as e:
                     st.error(f"Failed to generate email. Error: {e}")
-
 
 # ========= Reset Button =========
 def perform_reset():
