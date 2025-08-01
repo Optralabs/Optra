@@ -130,14 +130,37 @@ with st.form("sme_form"):
         st.session_state.email = email.strip()
 
 # ==== Improved Gantt timeline generator ====
-def generate_gantt_timeline(grant_name):
+
+st.subheader("Customize Timeline")
+
+# Let user set target submission date
+submission_date = st.date_input(
+    "Target Submission Date", 
+    value=datetime.today() + timedelta(days=30),
+    min_value=datetime.today()
+)
+
+# Optional buffer days between tasks
+include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
+
+def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     tasks = roadmap.get(grant_name, [])
-    base_date = datetime.today()
+    total_tasks = len(tasks)
+    if total_tasks == 0:
+        return None
+
+    # Determine spacing
+    duration_per_task = 2
+    buffer_days = 1 if include_buffer else 0
+    step = duration_per_task + buffer_days
+
     df = []
-    for i, task in enumerate(tasks):
-        start = base_date + timedelta(days=i * 3)
-        finish = start + timedelta(days=2)
+    for i, task in enumerate(reversed(tasks)):  # Calculate backwards
+        finish = submission_date - timedelta(days=i * step)
+        start = finish - timedelta(days=duration_per_task)
         df.append(dict(Task=task, Start=start, Finish=finish))
+
+    df = df[::-1]  # Flip to original order
 
     fig = ff.create_gantt(
         df,
@@ -153,11 +176,30 @@ def generate_gantt_timeline(grant_name):
         show_hover_fill=True
     )
 
+    fig = generate_gantt_timeline(
+        st.session_state.selected_grant,
+        submission_date,
+        include_buffer
+    )
+
     fig.update_layout(
-        plot_bgcolor='#0a0a0a', 
+        plot_bgcolor='#0a0a0a',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
-        margin=dict(l=120, r=40, t=60, b=40)
+        margin=dict(l=120, r=40, t=60, b=40),
+        yaxis=dict(
+            autorange='reversed',
+            tickfont=dict(size=13),
+            title='Tasks',
+            titlefont=dict(size=14),
+            gridcolor='rgba(255,255,255,0.1)',
+        ),
+        xaxis=dict(
+            title='Date',
+            tickformat='%b %d',
+            gridcolor='rgba(255,255,255,0.1)',
+            zeroline=False,
+        )
     )
     return fig
 
