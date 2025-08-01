@@ -176,12 +176,6 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
         show_hover_fill=True
     )
 
-    fig = generate_gantt_timeline(
-        st.session_state.selected_grant,
-        submission_date,
-        include_buffer
-    )
-
     fig.update_layout(
         plot_bgcolor='#0a0a0a',
         paper_bgcolor='rgba(0,0,0,0)',
