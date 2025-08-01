@@ -5,7 +5,7 @@ from openai import OpenAI  # ✅ Updated import for new SDK
 from PIL import Image
 import base64
 from io import BytesIO
-import plotly.graph_objects as go
+import plotly.figure_factory as ff
 import pandas as pd
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -129,38 +129,41 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ========= Clean Horizontal Timeline =========
-def generate_clean_timeline(grant_name):
-    checklist = roadmap.get(grant_name, [])
+# ==== New Gantt timeline generator using Plotly Figure Factory ====
+def generate_gantt_timeline(grant_name):
+    tasks = roadmap.get(grant_name, [])
     base_date = datetime.today()
-    df = pd.DataFrame({
-        "Task": checklist,
-        "Date": [base_date + timedelta(days=i * 3) for i in range(len(checklist))]
-    })
+    df = []
+    for i, task in enumerate(tasks):
+        start = base_date + timedelta(days=i * 3)
+        finish = start + timedelta(days=2)  # Each task 2 days duration approx
+        df.append(dict(Task=task, Start=start, Finish=finish))
 
-    fig = go.Figure()
-
-    fig.add_trace(go.Scatter(
-        x=df["Date"],
-        y=[1] * len(df),
-        mode="markers+text",
-        marker=dict(size=14, color="#3e6ce2"),
-        text=df["Task"],
-        textposition="top center",
-        hovertemplate="<b>%{text}</b><br>%{x|%b %d, %Y}<extra></extra>"
-    ))
+    fig = ff.create_gantt(
+        df,
+        index_col=None,
+        show_colorbar=False,
+        group_tasks=True,
+        title=f"{grant_name} Timeline",
+        bar_width=0.3,
+        showgrid_x=True,
+        showgrid_y=True
+    )
 
     fig.update_layout(
-        title=f"{grant_name} Timeline",
-        xaxis=dict(title="Date", showgrid=False),
-        yaxis=dict(visible=False),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
         height=300,
-        margin=dict(l=20, r=20, t=50, b=20),
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="white")
+        margin=dict(l=20, r=20, t=50, b=20)
     )
     return fig
+
+# ==== Helper to render checklists in expanders ====
+def render_checklist(title, items, key_prefix):
+    with st.expander(title, expanded=True):
+        for i, item in enumerate(items):
+            st.checkbox(item, key=f"{key_prefix}_{i}")
 
 # ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
@@ -170,43 +173,15 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     checklist_items = roadmap.get(st.session_state.selected_grant, [])
     docs = doc_checklist.get(st.session_state.selected_grant, [])
 
-    st.markdown("### Your Action Checklist")
-    for i, item in enumerate(checklist_items):
-        checkbox_key = f"checklist_{st.session_state.selected_grant}_{i}"
-        st.checkbox(str(item), key=checkbox_key)
-
-    st.markdown("### Grant-Specific Document Checklist")
-    for i, doc in enumerate(docs):
-        checkbox_key = f"doccheck_{st.session_state.selected_grant}_{i}"
-        st.checkbox(str(doc), key=checkbox_key)
+    cols = st.columns(2)
+    with cols[0]:
+        render_checklist("Your Action Checklist", checklist_items, f"checklist_{st.session_state.selected_grant}")
+    with cols[1]:
+        render_checklist("Grant-Specific Document Checklist", docs, f"doccheck_{st.session_state.selected_grant}")
 
     st.markdown("### Visual Grant Timeline")
-    fig = generate_clean_timeline(st.session_state.selected_grant)
+    fig = generate_gantt_timeline(st.session_state.selected_grant)
     st.plotly_chart(fig, use_container_width=True)
-
-import streamlit as st
-from openai import OpenAI
-import os
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-st.set_page_config(page_title="Grant Application Toolkit", layout="wide")
-
-# ===== Session Defaults =====
-if "plan_generated" not in st.session_state:
-    st.session_state.plan_generated = True
-
-if "selected_grant" not in st.session_state:
-    st.session_state.selected_grant = "Productivity Solutions Grant (PSG)"
-
-if "contact_person" not in st.session_state:
-    st.session_state.contact_person = "Alex Tan"
-
-if "email" not in st.session_state:
-    st.session_state.email = "alex@company.com"
-
-if "company_name" not in st.session_state:
-    st.session_state.company_name = "Innovatech Pte Ltd"
 
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
