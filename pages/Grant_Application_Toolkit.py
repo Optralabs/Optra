@@ -190,16 +190,6 @@ def render_checklist(title, items, key_prefix):
 
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
 
-    st.subheader("Customize Timeline")
-
-    submission_date = st.date_input(
-        "Target Submission Date", 
-        value=datetime.today() + timedelta(days=30),
-        min_value=datetime.today()
-    )
-
-    include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
-
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
@@ -213,6 +203,17 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     with cols[1]:
         with st.expander("Grant-Specific Document Checklist", expanded=True):
             render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
+
+    # Move "Customize Timeline" and chart here, below the checklists
+    st.subheader("Customize Timeline")
+
+    submission_date = st.date_input(
+        "Target Submission Date", 
+        value=datetime.today() + timedelta(days=30),
+        min_value=datetime.today()
+    )
+
+    include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
 
     st.markdown("\n")
     st.markdown("\n")
