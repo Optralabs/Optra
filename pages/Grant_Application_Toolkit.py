@@ -130,15 +130,13 @@ with st.form("sme_form"):
         st.session_state.email = email.strip()
 
 # ==== Improved Gantt timeline generator ====
-import plotly.figure_factory as ff 
-
 def generate_gantt_timeline(grant_name):
     tasks = roadmap.get(grant_name, [])
     base_date = datetime.today()
     df = []
     for i, task in enumerate(tasks):
         start = base_date + timedelta(days=i * 3)
-        finish = start + timedelta(days=2)  
+        finish = start + timedelta(days=2)
         df.append(dict(Task=task, Start=start, Finish=finish))
 
     fig = ff.create_gantt(
@@ -156,26 +154,12 @@ def generate_gantt_timeline(grant_name):
     )
 
     fig.update_layout(
-        plot_bgcolor='#0a0a0a',  
+        plot_bgcolor='#0a0a0a',  # Dark background consistent with app
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', size=12),
-        margin=dict(l=120, r=40, t=60, b=40),
-        yaxis=dict(
-            autorange='reversed',
-            tickfont=dict(size=13),
-            title='Tasks',
-            titlefont=dict(size=14),
-            gridcolor='rgba(255,255,255,0.1)',
-        ),
-        xaxis=dict(
-            title='Date',
-            tickformat='%b %d',
-            gridcolor='rgba(255,255,255,0.1)',
-            zeroline=False,
-        )
+        margin=dict(l=120, r=40, t=60, b=40)
     )
     return fig
-
 
 # ========= Planner UI Output =========
 
