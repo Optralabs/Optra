@@ -230,6 +230,8 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
 else:
     st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
 
+st.markdown("---")
+
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
     st.markdown("### AI-Powered Email Generator")
