@@ -129,14 +129,14 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ==== New Gantt timeline generator using Plotly Figure Factory ====
+# ==== Improved Gantt timeline generator ====
 def generate_gantt_timeline(grant_name):
     tasks = roadmap.get(grant_name, [])
     base_date = datetime.today()
     df = []
     for i, task in enumerate(tasks):
         start = base_date + timedelta(days=i * 3)
-        finish = start + timedelta(days=2)  # Each task 2 days duration approx
+        finish = start + timedelta(days=2)  # Each task ~2 days duration
         df.append(dict(Task=task, Start=start, Finish=finish))
 
     fig = ff.create_gantt(
@@ -145,25 +145,34 @@ def generate_gantt_timeline(grant_name):
         show_colorbar=False,
         group_tasks=True,
         title=f"{grant_name} Timeline",
-        bar_width=0.3,
+        bar_width=0.5,
         showgrid_x=True,
-        showgrid_y=True
+        showgrid_y=True,
+        height=350,
+        colors=["#3e6ce2"],
+        show_hover_fill=True
     )
 
     fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(10, 10, 10, 0.7)',
         paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-        height=300,
-        margin=dict(l=20, r=20, t=50, b=20)
+        font=dict(color='white', size=12),
+        margin=dict(l=120, r=40, t=60, b=40),
+        yaxis=dict(
+            autorange='reversed',
+            tickfont=dict(size=13),
+            title='Tasks',
+            titlefont=dict(size=14),
+            gridcolor='rgba(255,255,255,0.1)',
+        ),
+        xaxis=dict(
+            title='Date',
+            tickformat='%b %d',
+            gridcolor='rgba(255,255,255,0.1)',
+            zeroline=False,
+        )
     )
     return fig
-
-# ==== Helper to render checklists in expanders ====
-def render_checklist(title, items, key_prefix):
-    with st.expander(title, expanded=True):
-        for i, item in enumerate(items):
-            st.checkbox(item, key=f"{key_prefix}_{i}")
 
 # ========= Planner UI Output =========
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
@@ -179,9 +188,13 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     with cols[1]:
         render_checklist("Grant-Specific Document Checklist", docs, f"doccheck_{st.session_state.selected_grant}")
 
+    st.markdown("")  # Add vertical space
+    st.markdown("")  # More vertical space
+
     st.markdown("### Visual Grant Timeline")
     fig = generate_gantt_timeline(st.session_state.selected_grant)
     st.plotly_chart(fig, use_container_width=True)
+
 
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
