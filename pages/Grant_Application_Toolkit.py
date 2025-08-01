@@ -209,13 +209,16 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
             "Clarify grant requirements with officer",
             "Follow-up on pending response",
             "Submit supporting documents",
+            "Appeal for rejected application",
+            "Request extension for submission",
+            "Request site visit schedule",
             "Custom: Write your own"
         ]
     )
 
-    recipient_name = st.text_input("Recipient Name", placeholder="e.g. Write Contact Name Here")
+    recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
     recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
-    
+
     additional_context = st.text_area(
         "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
     )
@@ -226,28 +229,43 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
         else:
             with st.spinner("Composing your email..."):
                 try:
-                    prompt = f"""Compose a professional, concise email.
+                    prompt = f"""
+Compose a clear, professional, and customized email.
 
 Details:
 - Purpose: {email_purpose}
-- Sender: {st.session_state.contact_person} ({st.session_state.email})
+- Sender Name: {st.session_state.contact_person}
+- Sender Email: {st.session_state.email}
 - Company: {st.session_state.company_name}
-- Grant: {st.session_state.selected_grant}
+- Grant of Interest: {st.session_state.selected_grant}
 - Recipient: {recipient_name} ({recipient_email})
-- Additional Context: {additional_context if additional_context else "None"}
+- Additional Info: {additional_context if additional_context else "None"}
 
-Write this as an email from the sender to the recipient. Include a clear subject line, greeting, and closing."""
+Ensure the tone is polite, helpful, and adapted to an SME context. Include:
+1. A clear subject line.
+2. Proper salutation.
+3. Introduction with the sender's role and company.
+4. Purpose and action needed.
+5. Optional context and request for follow-up.
+6. Signature block with name, company, and contact info.
+"""
+
                     response = client.chat.completions.create(
                         model="gpt-4",
                         messages=[
-                            {"role": "system", "content": "You are a business writing assistant that drafts formal emails for grant processes."},
+                            {"role": "system", "content": "You are a business writing assistant that drafts formal, SME-friendly emails for government grant processes."},
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.6,
-                        max_tokens=500
+                        max_tokens=600
                     )
+
                     generated_email = response.choices[0].message.content.strip()
-                    st.text_area("Generated Email", value=generated_email, height=200)
+                    st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
+                    st.code(generated_email, language='markdown')
+
+                    st.button("Copy to Clipboard", on_click=st.experimental_set_query_params, kwargs={"copy": generated_email})
+
                 except Exception as e:
                     st.error(f"Failed to generate email. Error: {e}")
 
