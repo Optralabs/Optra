@@ -175,6 +175,13 @@ def generate_gantt_timeline(grant_name):
     return fig
 
 # ========= Planner UI Output =========
+
+def render_checklist(title, items, key_prefix):
+    st.markdown(f"### {title}")
+    for i, item in enumerate(items):
+        checkbox_key = f"{key_prefix}_{i}"
+        st.checkbox(str(item), key=checkbox_key)
+
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
