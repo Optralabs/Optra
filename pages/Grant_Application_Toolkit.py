@@ -184,19 +184,54 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     fig = generate_clean_timeline(st.session_state.selected_grant)
     st.plotly_chart(fig, use_container_width=True)
 
+import streamlit as st
+from openai import OpenAI
+import os
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+st.set_page_config(page_title="Grant Application Toolkit", layout="wide")
+
+# ===== Session Defaults =====
+if "plan_generated" not in st.session_state:
+    st.session_state.plan_generated = True
+
+if "selected_grant" not in st.session_state:
+    st.session_state.selected_grant = "Productivity Solutions Grant (PSG)"
+
+if "contact_person" not in st.session_state:
+    st.session_state.contact_person = "Alex Tan"
+
+if "email" not in st.session_state:
+    st.session_state.email = "alex@company.com"
+
+if "company_name" not in st.session_state:
+    st.session_state.company_name = "Innovatech Pte Ltd"
+
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
     st.markdown("### AI-Powered Email Generator")
 
     email_purpose = st.selectbox(
         "Select Email Purpose",
-        ["Requesting Quotation", "Following Up", "Seeking Clarification"]
+        [
+            "Request for quotation from vendor",
+            "Clarify grant requirements with officer",
+            "Follow-up on pending response",
+            "Submit supporting documents",
+            "Appeal for rejected application",
+            "Request extension for submission",
+            "Request site visit schedule",
+            "Custom: Write your own"
+        ]
     )
 
     recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
     recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
 
-    additional_context = st.text_area("Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday...")
+    additional_context = st.text_area(
+        "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
+    )
 
     if st.button("Generate Email"):
         if not recipient_name or not recipient_email:
@@ -204,23 +239,46 @@ if st.session_state.plan_generated and st.session_state.selected_grant:
         else:
             with st.spinner("Composing your email..."):
                 try:
-                    prompt = f"""Write a professional email to {recipient_name} ({recipient_email}) for the purpose of '{email_purpose}'. 
-                    Additional context: {additional_context}
-                    Signed off by {st.session_state.contact_person} from {st.session_state.company_name}.
-                    """
+                    prompt = f"""
+Compose a clear, professional, and customized email.
+
+Details:
+- Purpose: {email_purpose}
+- Sender Name: {st.session_state.contact_person}
+- Sender Email: {st.session_state.email}
+- Company: {st.session_state.company_name}
+- Grant of Interest: {st.session_state.selected_grant}
+- Recipient: {recipient_name} ({recipient_email})
+- Additional Info: {additional_context if additional_context else "None"}
+
+Ensure the tone is polite, helpful, and adapted to an SME context. Include:
+1. A clear subject line.
+2. Proper salutation.
+3. Introduction with the sender's role and company.
+4. Purpose and action needed.
+5. Optional context and request for follow-up.
+6. Signature block with name, company, and contact info.
+"""
+
                     response = client.chat.completions.create(
                         model="gpt-4",
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0.7
+                        messages=[
+                            {"role": "system", "content": "You are a business writing assistant that drafts formal, SME-friendly emails for government grant processes."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.6,
+                        max_tokens=600
                     )
+
                     generated_email = response.choices[0].message.content.strip()
                     st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
                     st.code(generated_email, language='markdown')
 
-                    st.button("Copy to Clipboard", on_click=lambda: st.query_params.update({"copy": generated_email}))
+                    st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
 
                 except Exception as e:
                     st.error(f"Failed to generate email. Error: {e}")
+
 
 # ========= Reset Button =========
 def perform_reset():
