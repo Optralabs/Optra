@@ -129,18 +129,6 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-# ==== Improved Gantt timeline generator ====
-
-st.subheader("Customize Timeline")
-
-submission_date = st.date_input(
-    "Target Submission Date", 
-    value=datetime.today() + timedelta(days=30),
-    min_value=datetime.today()
-)
-
-include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
-
 def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     tasks = roadmap.get(grant_name, [])
     total_tasks = len(tasks)
@@ -193,8 +181,6 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     )
     return fig
 
-# ========= Planner UI Output =========
-
 def render_checklist(title, items, key_prefix):
     if title: 
         st.markdown(f"### {title}")
@@ -203,6 +189,17 @@ def render_checklist(title, items, key_prefix):
         st.checkbox(str(item), key=checkbox_key)
 
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
+
+    st.subheader("Customize Timeline")
+
+    submission_date = st.date_input(
+        "Target Submission Date", 
+        value=datetime.today() + timedelta(days=30),
+        min_value=datetime.today()
+    )
+
+    include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
+
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
@@ -228,6 +225,9 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+else:
+    st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
 
 # ========= AI Email Generator =========
 if st.session_state.plan_generated and st.session_state.selected_grant:
