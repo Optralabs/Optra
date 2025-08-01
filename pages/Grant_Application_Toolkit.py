@@ -192,9 +192,6 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     )
     return fig
 
-import openai
-import os
-
 def render_checklist(title, items, key_prefix):
     st.subheader(title)
     for idx, item in enumerate(items):
@@ -202,21 +199,17 @@ def render_checklist(title, items, key_prefix):
         explain_key = f"{key_prefix}_explain_{idx}"
         toggle_key = f"{key_prefix}_toggle_{idx}"
 
-        # Render the checklist checkbox
         st.checkbox(item, key=item_key)
 
-        # Explain button
         col1, col2 = st.columns([1, 2])
         with col1:
             if st.button("Explain", key=explain_key):
                 st.session_state[toggle_key] = not st.session_state.get(toggle_key, False)
 
-        # If explanation is open
         if st.session_state.get(toggle_key):
             with st.spinner("Generating explanation..."):
-                # Call OpenAI API only if explanation not already stored
                 if f"{toggle_key}_text" not in st.session_state:
-                    response = openai.ChatCompletion.create(
+                    response = client.chat.completions.create(
                         model="gpt-4",
                         messages=[
                             {"role": "system", "content": "You are an expert grant consultant helping simplify tasks."},
@@ -225,9 +218,8 @@ def render_checklist(title, items, key_prefix):
                         temperature=0.5,
                         max_tokens=300
                     )
-                    st.session_state[f"{toggle_key}_text"] = response['choices'][0]['message']['content']
+                    st.session_state[f"{toggle_key}_text"] = response.choices[0].message.content
 
-            # Display explanation
             st.markdown(
                 f"""
                 <div style="background-color:#f1f3f4; padding:1rem; border-radius:8px; margin-bottom:0.5rem; max-width:90%;">
@@ -237,11 +229,9 @@ def render_checklist(title, items, key_prefix):
                 unsafe_allow_html=True
             )
 
-            # Close explanation button
             if st.button("Close explanation", key=f"{toggle_key}_close"):
                 st.session_state[toggle_key] = False
-
-
+                
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
 
     st.markdown("---")
