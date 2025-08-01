@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime, timedelta
 from streamlit_extras.stylable_container import stylable_container
-from openai import OpenAI  # ✅ Updated import for new SDK
+from openai import OpenAI 
 from PIL import Image
 import base64
 from io import BytesIO
@@ -133,14 +133,12 @@ with st.form("sme_form"):
 
 st.subheader("Customize Timeline")
 
-# Let user set target submission date
 submission_date = st.date_input(
     "Target Submission Date", 
     value=datetime.today() + timedelta(days=30),
     min_value=datetime.today()
 )
 
-# Optional buffer days between tasks
 include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
 
 def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
@@ -149,18 +147,17 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     if total_tasks == 0:
         return None
 
-    # Determine spacing
     duration_per_task = 2
     buffer_days = 1 if include_buffer else 0
     step = duration_per_task + buffer_days
 
     df = []
-    for i, task in enumerate(reversed(tasks)):  # Calculate backwards
+    for i, task in enumerate(reversed(tasks)):
         finish = submission_date - timedelta(days=i * step)
         start = finish - timedelta(days=duration_per_task)
         df.append(dict(Task=task, Start=start, Finish=finish))
 
-    df = df[::-1]  # Flip to original order
+    df = df[::-1]
 
     fig = ff.create_gantt(
         df,
@@ -221,9 +218,8 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         with st.expander("Grant-Specific Document Checklist", expanded=True):
             render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
 
-
-    st.markdown("")  # Add vertical space
-    st.markdown("")  # More vertical space
+    st.markdown("\n")
+    st.markdown("\n")
 
     st.markdown("### Visual Grant Timeline")
     fig = generate_gantt_timeline(
