@@ -178,9 +178,12 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
 
     cols = st.columns(2)
     with cols[0]:
-        render_checklist("Your Action Checklist", checklist_items, f"checklist_{st.session_state.selected_grant}")
+        with st.expander("Your Action Checklist", expanded=True):
+            render_checklist("", checklist_items, f"checklist_{st.session_state.selected_grant}")
     with cols[1]:
-        render_checklist("Grant-Specific Document Checklist", docs, f"doccheck_{st.session_state.selected_grant}")
+        with st.expander("Grant-Specific Document Checklist", expanded=True):
+            render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
+
 
     st.markdown("")  # Add vertical space
     st.markdown("")  # More vertical space
