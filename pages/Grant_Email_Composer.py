@@ -153,14 +153,10 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
 if "generated_email" in st.session_state:
     st.text_area("Generated Email", value=st.session_state.generated_email, height=250, key="email_output")
 
-    # Copy to clipboard button styled exactly like the generate button
     if st.button("Copy Email to Clipboard", key="copy_email_btn"):
         try:
-            # Use Streamlit's clipboard API if available (experimental)
-            st.experimental_set_query_params()  # workaround to prevent rerun on clipboard action
             import pyperclip
             pyperclip.copy(st.session_state.generated_email)
             st.toast("Email copied to clipboard!")
         except Exception:
             st.error("Failed to copy email to clipboard. Please copy manually.")
-
