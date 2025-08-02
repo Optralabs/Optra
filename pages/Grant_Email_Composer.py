@@ -69,10 +69,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ... [Keep everything above unchanged] ...
+
 # ========= App State Setup =========
 st.title("Grant Email Composer")
 st.markdown("Instantly enhance your emailing capabilities to the Grant-relevant organizations you contact.")
 
+selected_grant = st.selectbox(
     "Select Grant of Interest",
     ["Productivity Solutions Grant (PSG)", "Enterprise Development Grant (EDG)", "Market Readiness Assistance (MRA)", "Startup SG Founder", "Other"]
 )
@@ -97,7 +100,6 @@ sender_email = st.text_input("Your Email", placeholder="e.g. yourname@example.co
 
 # Other optional info
 company_name = st.text_input("Company Name", placeholder="e.g. Your Company Pte Ltd")
-selected_grant = st.selectbox(
 
 recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
 recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
@@ -153,3 +155,4 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
+
