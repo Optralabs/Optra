@@ -146,12 +146,9 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                 )
 
                 generated_email = response.choices[0].message.content.strip()
-                # Store generated email in session state to preserve
-                st.session_state.generated_email = generated_email
-
                 st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
 
-                # Inject a proper working copy button with JS inside iframe
+                # Copy to clipboard button with hidden textarea workaround
                 copy_button_code = f"""
                 <button id="copy-btn" style="
                     background-color: #3e6ce2;
@@ -165,20 +162,18 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     Copy Email to Clipboard
                 </button>
 
+                <textarea id="email-text" style="position: absolute; left: -9999px; top: 0;">{generated_email.replace('"', '&quot;')}</textarea>
+
                 <script>
                 const copyBtn = document.getElementById('copy-btn');
+                const emailText = document.getElementById('email-text');
                 copyBtn.addEventListener('click', () => {{
-                    const textarea = document.querySelector('textarea[aria-label="Generated Email"]');
-                    if(textarea) {{
-                        textarea.select();
-                        navigator.clipboard.writeText(textarea.value).then(() => {{
-                            alert('Email copied to clipboard!');
-                        }}).catch(err => {{
-                            alert('Failed to copy text: ' + err);
-                        }});
-                    }} else {{
-                        alert('Could not find the email text area.');
-                    }}
+                    emailText.select();
+                    navigator.clipboard.writeText(emailText.value).then(() => {{
+                        alert('Email copied to clipboard!');
+                    }}).catch(err => {{
+                        alert('Failed to copy text: ' + err);
+                    }});
                 }});
                 </script>
                 """
