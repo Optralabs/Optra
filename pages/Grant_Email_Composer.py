@@ -73,6 +73,17 @@ st.markdown("""
 st.title("Grant Email Composer")
 st.markdown("Instantly enhance your emailing capabilities to the Grant-relevant organizations you contact.")
 
+# 🔁 Allow user to input their own name and email
+sender_name = st.text_input("Your Name (Sender)", placeholder="e.g. Edward Teo")
+sender_email = st.text_input("Your Email", placeholder="e.g. edward@example.com")
+
+# Other optional info
+company_name = st.text_input("Company Name", placeholder="e.g. Acme Pte Ltd")
+selected_grant = st.selectbox(
+    "Select Grant of Interest",
+    ["Productivity Solutions Grant (PSG)", "Enterprise Development Grant (EDG)", "Market Readiness Assistance (MRA)", "Startup SG Founder", "Other"]
+)
+
 email_purpose = st.selectbox(
     "Select Email Purpose",
     [
@@ -95,7 +106,9 @@ additional_context = st.text_area(
 )
 
 if st.button("Generate Email"):
-    if not recipient_name or not recipient_email:
+    if not sender_name or not sender_email:
+        st.warning("Please provide both your name and email.")
+    elif not recipient_name or not recipient_email:
         st.warning("Please provide both recipient name and recipient email.")
     else:
         with st.spinner("Composing your email..."):
@@ -105,10 +118,10 @@ Compose a clear, professional, and customized email.
 
 Details:
 - Purpose: {email_purpose}
-- Sender Name: {st.session_state.contact_person}
-- Sender Email: {st.session_state.email}
-- Company: {st.session_state.company_name}
-- Grant of Interest: {st.session_state.selected_grant}
+- Sender Name: {sender_name}
+- Sender Email: {sender_email}
+- Company: {company_name}
+- Grant of Interest: {selected_grant}
 - Recipient: {recipient_name} ({recipient_email})
 - Additional Info: {additional_context if additional_context else "None"}
 
