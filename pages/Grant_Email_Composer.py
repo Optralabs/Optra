@@ -145,8 +145,7 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     max_tokens=600
                 )
 
-                generated_email = response.choices[0].message.content.strip()
-                st.session_state.generated_email = generated_email
+                st.session_state.generated_email = response.choices[0].message.content.strip()
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
@@ -154,27 +153,14 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
 if "generated_email" in st.session_state:
     st.text_area("Generated Email", value=st.session_state.generated_email, height=250, key="email_output")
 
-    st.markdown(f"""
-        <style>
-            .copy-btn {{
-                background-color: #3e6ce2;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 16px;
-                margin-top: 10px;
-            }}
-            .copy-btn:hover {{
-                background-color: #355ac8;
-            }}
-        </style>
-        <button class="copy-btn" onclick="
-            navigator.clipboard.writeText(`{st.session_state.generated_email.replace('`', '\\`')}`).then(() => {{
-                alert('Email copied to clipboard!');
-            }}).catch(() => {{
-                alert('Failed to copy email to clipboard.');
-            }});
-        ">Copy Email to Clipboard</button>
-    """, unsafe_allow_html=True)
+    # Copy to clipboard button styled exactly like the generate button
+    if st.button("Copy Email to Clipboard", key="copy_email_btn"):
+        try:
+            # Use Streamlit's clipboard API if available (experimental)
+            st.experimental_set_query_params()  # workaround to prevent rerun on clipboard action
+            import pyperclip
+            pyperclip.copy(st.session_state.generated_email)
+            st.toast("Email copied to clipboard!")
+        except Exception:
+            st.error("Failed to copy email to clipboard. Please copy manually.")
+
