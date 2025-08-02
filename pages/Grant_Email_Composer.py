@@ -165,5 +165,6 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                 </button>
                 """, unsafe_allow_html=True)
 
+
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
