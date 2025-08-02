@@ -190,41 +190,54 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         with st.expander("Grant-Specific Document Checklist", expanded=True):
             render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
 
-    st.markdown("---")
-    st.subheader("AI-Powered Dynamic Timeline")
+  st.markdown("---")
+st.subheader("AI-Powered Dynamic Timeline")
 
-    submission_date = st.date_input(
-        "Target Submission Date", 
-        value=datetime.today() + timedelta(days=30),
-        min_value=datetime.today()
-    )
+submission_date = st.date_input(
+    "Target Submission Date", 
+    value=datetime.today() + timedelta(days=30),
+    min_value=datetime.today()
+)
 
-    if st.button("Generate Timeline Guide"):
-        with st.spinner("Generating detailed timeline..."):
-            prompt = f"""
-You are an expert grant consultant. Create a detailed, step-by-step action timeline for an SME applying for the {st.session_state.selected_grant}.
-Submission Date: {submission_date.strftime('%Y-%m-%d')}
-List the steps in a bullet format with short actionable instructions, organized by week or phase.
-Only return the formatted plan.
+if st.button("Generate Timeline Guide"):
+    with st.spinner("Generating detailed timeline..."):
+        today = datetime.today()
+        today_str = today.strftime('%B %d, %Y')
+        days_left = (submission_date - today).days
+        num_weeks = max(1, days_left // 7)
+
+        prompt = f"""
+You are a Singapore grant consultant AI. Create a week-by-week grant application timeline for an SME applying for the "{st.session_state.selected_grant}" grant.
+
+Start from {today_str}, and assume the target submission date is {submission_date.strftime('%B %d, %Y')}.
+
+The total planning window is {num_weeks} weeks. For each week, include:
+- Week number
+- Exact date range (e.g. August 5–August 11, 2025)
+- A short, actionable task description for that week
+
+Use bullet points or line breaks. Do not include a preamble or extra commentary — just the timeline.
 """
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You help SMEs plan grant applications efficiently."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.6,
-                    max_tokens=800
-                )
-                timeline_text = response.choices[0].message.content.strip()
-                st.markdown("### Timeline Plan")
-                st.markdown(timeline_text)
-            except Exception as e:
-                st.error(f"Error generating timeline: {e}")
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You help SMEs plan grant applications efficiently."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.6,
+                max_tokens=1000
+            )
+            timeline_text = response.choices[0].message.content.strip()
+            st.markdown("### Timeline Plan")
+            st.markdown(timeline_text)
+        except Exception as e:
+            st.error(f"Error generating timeline: {e}")
 
 else:
     st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
+
 
 # ========= Reset Button =========
 def perform_reset():
