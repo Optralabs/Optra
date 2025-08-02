@@ -141,6 +141,47 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
+    def render_checklist(title, items, key_prefix):
+    st.subheader(title)
+    for idx, item in enumerate(items):
+        item_key = f"{key_prefix}_item_{idx}"
+        explain_key = f"{key_prefix}_explain_{idx}"
+        toggle_key = f"{key_prefix}_toggle_{idx}"
+
+        st.checkbox(item, key=item_key)
+
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            if st.button("Explain", key=explain_key):
+                st.session_state[toggle_key] = not st.session_state.get(toggle_key, False)
+
+        if st.session_state.get(toggle_key):
+            with st.spinner("Generating explanation..."):
+                if f"{toggle_key}_text" not in st.session_state:
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[
+                            {"role": "system", "content": "You are an expert grant consultant helping simplify tasks."},
+                            {"role": "user", "content": f"Explain and simplify this grant application task: '{item}'"}
+                        ],
+                        temperature=0.5,
+                        max_tokens=300
+                    )
+                    st.session_state[f"{toggle_key}_text"] = response.choices[0].message.content
+
+            st.markdown(
+                f"""
+                <div style="background-color:#111729; color: #ffffff; padding:1rem; border-radius:8px; margin-top:0.5rem; margin-bottom:1rem; max-width:90%;">
+                    <strong style="color: #8ab4f8;">Explanation:</strong><br>{st.session_state[f"{toggle_key}_text"]}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            if st.button("Close explanation", key=f"{toggle_key}_close"):
+                st.session_state[toggle_key] = False
+
+
     checklist_items = roadmap.get(st.session_state.selected_grant, [])
     docs = doc_checklist.get(st.session_state.selected_grant, [])
 
