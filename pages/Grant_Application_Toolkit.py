@@ -139,8 +139,9 @@ with st.form("sme_form"):
         st.session_state.company_name = company_name.strip()
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
-
-def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
+        
+# --- Segmented Timeline Chart (replacement for Gantt) ---
+def generate_segmented_timeline(grant_name, submission_date, include_buffer=True):
     tasks = roadmap.get(grant_name, [])
     total_tasks = len(tasks)
     if total_tasks == 0:
@@ -150,46 +151,49 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     buffer_days = 1 if include_buffer else 0
     step = duration_per_task + buffer_days
 
-    df = []
+    segments = []
     for i, task in enumerate(reversed(tasks)):
-        finish = submission_date - timedelta(days=i * step)
-        start = finish - timedelta(days=duration_per_task)
-        df.append(dict(Task=task, Start=start, Finish=finish))
+        end = submission_date - timedelta(days=i * step)
+        start = end - timedelta(days=duration_per_task)
+        segments.append((task, start, end))
 
-    df = df[::-1]
+    segments = segments[::-1]
 
-    fig = ff.create_gantt(
-        df,
-        index_col=None,
-        show_colorbar=False,
-        group_tasks=True,
-        title=f"{grant_name} Timeline",
-        bar_width=0.5,
-        showgrid_x=True,
-        showgrid_y=True,
-        height=350,
-        colors=["#3e6ce2"],
-        show_hover_fill=True
-    )
+    colors = ["#3e6ce2", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
+
+    fig = go.Figure()
+
+    for idx, (task, start, end) in enumerate(segments):
+        fig.add_trace(go.Scatter(
+            x=[start, end],
+            y=[1, 1],
+            mode='lines',
+            line=dict(color=colors[idx % len(colors)], width=16),
+            hovertemplate=f"<b>{task}</b><br>%{{x|%b %d}}<extra></extra>",
+            name=task
+        ))
 
     fig.update_layout(
-        plot_bgcolor='#0a0a0a',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', size=12),
-        margin=dict(l=120, r=40, t=60, b=40),
-        yaxis=dict(
-            autorange='reversed',
-            tickfont=dict(size=13),
-            title=dict(text='Tasks', font=dict(size=14)),
-            gridcolor='rgba(255,255,255,0.1)',
-        ),
+        title=f"{grant_name} Application Timeline",
+        height=200,
+        margin=dict(l=40, r=40, t=60, b=40),
         xaxis=dict(
-            title=dict(text='Date'),
-            tickformat='%b %d',
-            gridcolor='rgba(255,255,255,0.1)',
-            zeroline=False,
-        )
+            title="Date",
+            tickformat="%b %d",
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis=dict(
+            showticklabels=False,
+            showgrid=False,
+            range=[0.5, 1.5],
+            fixedrange=True
+        ),
+        plot_bgcolor="#0a0a0a",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="white")
     )
+
     return fig
 
 def render_checklist(title, items, key_prefix):
