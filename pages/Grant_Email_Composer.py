@@ -69,8 +69,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ... [Keep everything above unchanged] ...
-
 # ========= App State Setup =========
 st.title("Grant Email Composer")
 st.markdown("Instantly enhance your emailing capabilities to the Grant-relevant organizations you contact.")
@@ -148,11 +146,9 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                 )
 
                 generated_email = response.choices[0].message.content.strip()
-               st.text_area("Generated Email", value=generated_email, height=250)
+                st.text_area("Generated Email", value=generated_email, height=250)
 
                 st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
 
-
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
-
