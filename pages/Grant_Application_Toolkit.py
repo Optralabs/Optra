@@ -32,6 +32,44 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
+    tasks = roadmap.get(grant_name, [])
+    total_tasks = len(tasks)
+    if total_tasks == 0:
+        return None
+
+    duration_per_task = 2
+    buffer_days = 1 if include_buffer else 0
+    step = duration_per_task + buffer_days
+
+    segments = []
+    for i, task in enumerate(reversed(tasks)):
+        end = submission_date - timedelta(days=i * step)
+        start = end - timedelta(days=duration_per_task)
+        segments.append((task, start, end))
+
+    segments = segments[::-1]
+
+    colors = ["#3e6ce2", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
+
+    df = pd.DataFrame([{
+        "Task": task,
+        "Start": start,
+        "End": end,
+        "Resource": task
+    } for task, start, end in segments])
+
+    fig = ff.create_gantt(df, index_col="Resource", show_colorbar=True, group_tasks=True)
+    fig.update_layout(
+        plot_bgcolor="#0f111f",
+        paper_bgcolor="#0f111f",
+        font=dict(color="white"),
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=450
+    )
+    return fig
+
+
 # ---------------------------- Sidebar UI & Theme ----------------------------
 st.markdown("""
     <style>
