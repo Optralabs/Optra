@@ -69,39 +69,38 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
 # ========= App State Setup =========
 st.title("Grant Email Composer")
 st.markdown("Instantly enhance your emailing capabilities to the Grant-relevant organizations you contact.")
 
-    email_purpose = st.selectbox(
-        "Select Email Purpose",
-        [
-            "Request for quotation from vendor",
-            "Clarify grant requirements with officer",
-            "Follow-up on pending response",
-            "Submit supporting documents",
-            "Appeal for rejected application",
-            "Request extension for submission",
-            "Request site visit schedule",
-            "Custom: Write your own"
-        ]
-    )
+email_purpose = st.selectbox(
+    "Select Email Purpose",
+    [
+        "Request for quotation from vendor",
+        "Clarify grant requirements with officer",
+        "Follow-up on pending response",
+        "Submit supporting documents",
+        "Appeal for rejected application",
+        "Request extension for submission",
+        "Request site visit schedule",
+        "Custom: Write your own"
+    ]
+)
 
-    recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
-    recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
+recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
+recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
 
-    additional_context = st.text_area(
-        "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
-    )
+additional_context = st.text_area(
+    "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
+)
 
-    if st.button("Generate Email"):
-        if not recipient_name or not recipient_email:
-            st.warning("Please provide both recipient name and recipient email.")
-        else:
-            with st.spinner("Composing your email..."):
-                try:
-                    prompt = f"""
+if st.button("Generate Email"):
+    if not recipient_name or not recipient_email:
+        st.warning("Please provide both recipient name and recipient email.")
+    else:
+        with st.spinner("Composing your email..."):
+            try:
+                prompt = f"""
 Compose a clear, professional, and customized email.
 
 Details:
@@ -122,21 +121,21 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
 6. Signature block with name, company, and contact info.
 """
 
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": "You are a business writing assistant that drafts formal, SME-friendly emails for government grant processes."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.6,
-                        max_tokens=600
-                    )
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a business writing assistant that drafts formal, SME-friendly emails for government grant processes."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.6,
+                    max_tokens=600
+                )
 
-                    generated_email = response.choices[0].message.content.strip()
-                    st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
-                    st.code(generated_email, language='markdown')
+                generated_email = response.choices[0].message.content.strip()
+                st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
+                st.code(generated_email, language='markdown')
 
-                    st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
+                st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
 
-                except Exception as e:
-                    st.error(f"Failed to generate email. Error: {e}")
+            except Exception as e:
+                st.error(f"Failed to generate email. Error: {e}")
