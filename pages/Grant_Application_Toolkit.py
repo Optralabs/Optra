@@ -226,14 +226,6 @@ Only return the formatted plan.
 else:
     st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
 
-def perform_reset():
-    for key in list(st.session_state.keys()):
-        if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
-            del st.session_state[key]
-
-if st.session_state.get("plan_generated"):
-    st.button("Reset Planner", on_click=perform_reset)
-
 # ========= Reset Button =========
 def perform_reset():
     for key in list(st.session_state.keys()):
