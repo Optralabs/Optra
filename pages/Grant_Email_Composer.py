@@ -73,13 +73,6 @@ st.markdown("""
 st.title("Grant Email Composer")
 st.markdown("Instantly enhance your emailing capabilities to the Grant-relevant organizations you contact.")
 
-# 🔁 Allow user to input their own name and email
-sender_name = st.text_input("Your Name (Sender)", placeholder="e.g. Edward Teo")
-sender_email = st.text_input("Your Email", placeholder="e.g. edward@example.com")
-
-# Other optional info
-company_name = st.text_input("Company Name", placeholder="e.g. Acme Pte Ltd")
-selected_grant = st.selectbox(
     "Select Grant of Interest",
     ["Productivity Solutions Grant (PSG)", "Enterprise Development Grant (EDG)", "Market Readiness Assistance (MRA)", "Startup SG Founder", "Other"]
 )
@@ -97,6 +90,14 @@ email_purpose = st.selectbox(
         "Custom: Write your own"
     ]
 )
+
+# Allow user to input their own name and email
+sender_name = st.text_input("Your Name (Sender)", placeholder="Your Name")
+sender_email = st.text_input("Your Email", placeholder="e.g. yourname@example.com")
+
+# Other optional info
+company_name = st.text_input("Company Name", placeholder="e.g. Your Company Pte Ltd")
+selected_grant = st.selectbox(
 
 recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
 recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
