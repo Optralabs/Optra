@@ -106,6 +106,10 @@ additional_context = st.text_area(
     "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
 )
 
+# Initialize session_state variable for email storage
+if "generated_email" not in st.session_state:
+    st.session_state.generated_email = ""
+
 if st.button("Generate Email"):
     if not sender_name or not sender_email:
         st.warning("Please provide both your name and email.")
@@ -145,26 +149,33 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     max_tokens=600
                 )
 
-                generated_email = response.choices[0].message.content.strip()
-                st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
-
-                st.markdown(f"""
-                <button onclick="
-                    navigator.clipboard.writeText(`{generated_email.replace('`', '\\`')}`).then(() => {{
-                        alert('Email copied to clipboard!');
-                    }});
-                " style="
-                    background-color: #3e6ce2; 
-                    color: white; 
-                    border: none; 
-                    padding: 8px 16px; 
-                    border-radius: 8px; 
-                    cursor: pointer;
-                ">
-                Copy Email to Clipboard
-                </button>
-                """, unsafe_allow_html=True)
-
+                st.session_state.generated_email = response.choices[0].message.content.strip()
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
+
+if st.session_state.generated_email:
+    st.text_area("Generated Email", value=st.session_state.generated_email, height=250, key="email_output")
+
+    # Custom Copy Button using JS that copies textarea content
+    st.markdown(f"""
+    <button onclick="
+        const textarea = window.parent.document.querySelector('textarea[data-key=email_output]');
+        if (textarea) {{
+            navigator.clipboard.writeText(textarea.value).then(() => {{
+                alert('Email copied to clipboard!');
+            }});
+        }} else {{
+            alert('Failed to find the email text area!');
+        }}
+    " style="
+        background-color: #3e6ce2; 
+        color: white; 
+        border: none; 
+        padding: 8px 16px; 
+        border-radius: 8px; 
+        cursor: pointer;
+    ">
+    Copy Email to Clipboard
+    </button>
+    """, unsafe_allow_html=True)
