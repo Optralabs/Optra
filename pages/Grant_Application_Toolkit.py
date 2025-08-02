@@ -121,6 +121,7 @@ if "plan_generated" not in st.session_state:
 if "selected_grant" not in st.session_state:
     st.session_state.selected_grant = None
 
+# --- 1. Form for user input and generate application guide button ---
 with st.form("sme_form"):
     selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
     company_name = st.text_input("Company Name")
@@ -135,45 +136,7 @@ with st.form("sme_form"):
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
 
-def render_checklist(title, items, key_prefix):
-    st.subheader(title)
-    for idx, item in enumerate(items):
-        item_key = f"{key_prefix}_item_{idx}"
-        explain_key = f"{key_prefix}_explain_{idx}"
-        toggle_key = f"{key_prefix}_toggle_{idx}"
-
-        st.checkbox(item, key=item_key)
-
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            if st.button("Explain", key=explain_key):
-                st.session_state[toggle_key] = not st.session_state.get(toggle_key, False)
-
-        if st.session_state.get(toggle_key):
-            with st.spinner("Generating explanation..."):
-                if f"{toggle_key}_text" not in st.session_state:
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": "You are an expert grant consultant helping simplify tasks."},
-                            {"role": "user", "content": f"Explain and simplify this grant application task: '{item}'"}
-                        ],
-                        temperature=0.5,
-                        max_tokens=300
-                    )
-                    st.session_state[f"{toggle_key}_text"] = response.choices[0].message.content
-
-            st.markdown(
-                f"""
-                <div style="background-color:#111729; color: #ffffff; padding:1rem; border-radius:8px; margin-top:0.5rem; margin-bottom:1rem; max-width:90%;">
-                    <strong style="color: #8ab4f8;">Explanation:</strong><br>{st.session_state[f"{toggle_key}_text"]}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            if st.button("Close explanation", key=f"{toggle_key}_close"):
-                st.session_state[toggle_key] = False
+# --- 2. Show next steps, checklists, and timeline ONLY after plan generated ---
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
@@ -189,24 +152,23 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         with st.expander("Grant-Specific Document Checklist", expanded=True):
             render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
 
-st.markdown("---")
-st.subheader("AI-Powered Dynamic Timeline")
+    st.markdown("---")
+    st.subheader("AI-Powered Dynamic Timeline")
 
-submission_date = st.date_input(
-    "Target Submission Date", 
-    value=datetime.today() + timedelta(days=30),
-    min_value=datetime.today()
-)
+    submission_date = st.date_input(
+        "Target Submission Date", 
+        value=datetime.today() + timedelta(days=30),
+        min_value=datetime.today()
+    )
 
-if st.button("Generate Timeline Guide"):
-    with st.spinner("Generating detailed timeline..."):
-        today = datetime.today().date() 
-        today_str = today.strftime('%B %d, %Y')
-        days_left = (submission_date - today).days
-        num_weeks = max(1, days_left // 7)
-        ...
+    if st.button("Generate Timeline Guide"):
+        with st.spinner("Generating detailed timeline..."):
+            today = datetime.today().date() 
+            today_str = today.strftime('%B %d, %Y')
+            days_left = (submission_date - today).days
+            num_weeks = max(1, days_left // 7)
 
-        prompt = f"""
+            prompt = f"""
 You are a Singapore grant consultant AI. Create a week-by-week grant application timeline for an SME applying for the "{st.session_state.selected_grant}" grant.
 
 Start from {today_str}, and assume the target submission date is {submission_date.strftime('%B %d, %Y')}.
@@ -218,28 +180,26 @@ The total planning window is {num_weeks} weeks. For each week, include:
 
 Use bullet points or line breaks. Do not include a preamble or extra commentary — just the timeline.
 """
-
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You help SMEs plan grant applications efficiently."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.6,
-                max_tokens=1000
-            )
-            timeline_text = response.choices[0].message.content.strip()
-            st.markdown("### Timeline Plan")
-            st.markdown(timeline_text)
-        except Exception as e:
-            st.error(f"Error generating timeline: {e}")
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You help SMEs plan grant applications efficiently."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.6,
+                    max_tokens=1000
+                )
+                timeline_text = response.choices[0].message.content.strip()
+                st.markdown("### Timeline Plan")
+                st.markdown(timeline_text)
+            except Exception as e:
+                st.error(f"Error generating timeline: {e}")
 
 else:
     st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
 
-
-# ========= Reset Button =========
+# --- Reset Button ---
 def perform_reset():
     for key in list(st.session_state.keys()):
         if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
@@ -247,3 +207,4 @@ def perform_reset():
 
 if st.session_state.get("plan_generated"):
     st.button("Reset Planner", on_click=perform_reset)
+
