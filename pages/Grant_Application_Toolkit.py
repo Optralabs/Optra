@@ -174,7 +174,6 @@ def render_checklist(title, items, key_prefix):
 
             if st.button("Close explanation", key=f"{toggle_key}_close"):
                 st.session_state[toggle_key] = False
-
 if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
@@ -190,7 +189,7 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         with st.expander("Grant-Specific Document Checklist", expanded=True):
             render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
 
-  st.markdown("---")
+st.markdown("---")
 st.subheader("AI-Powered Dynamic Timeline")
 
 submission_date = st.date_input(
