@@ -200,10 +200,11 @@ submission_date = st.date_input(
 
 if st.button("Generate Timeline Guide"):
     with st.spinner("Generating detailed timeline..."):
-        today = datetime.today()
+        today = datetime.today().date() 
         today_str = today.strftime('%B %d, %Y')
         days_left = (submission_date - today).days
         num_weeks = max(1, days_left // 7)
+        ...
 
         prompt = f"""
 You are a Singapore grant consultant AI. Create a week-by-week grant application timeline for an SME applying for the "{st.session_state.selected_grant}" grant.
