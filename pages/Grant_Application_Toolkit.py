@@ -30,6 +30,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 # ---------------------------- Sidebar UI & Theme ----------------------------
 st.markdown("""
     <style>
@@ -121,27 +122,8 @@ if "plan_generated" not in st.session_state:
 if "selected_grant" not in st.session_state:
     st.session_state.selected_grant = None
 
-# --- 1. Form for user input and generate application guide button ---
-with st.form("sme_form"):
-    selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
-    company_name = st.text_input("Company Name")
-    contact_person = st.text_input("Your Name")
-    email = st.text_input("Your Email")
-    submitted = st.form_submit_button("Generate Application Guide")
-
-    if submitted and company_name.strip():
-        st.session_state.plan_generated = True
-        st.session_state.selected_grant = selected_grant
-        st.session_state.company_name = company_name.strip()
-        st.session_state.contact_person = contact_person.strip()
-        st.session_state.email = email.strip()
-
-# --- 2. Show next steps, checklists, and timeline ONLY after plan generated ---
-if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
-    st.markdown("---")
-    st.subheader(f"Next Steps for {st.session_state.selected_grant}")
-
-    def render_checklist(title, items, key_prefix):
+# --- Define render_checklist function at top-level (NOT inside any if block) ---
+def render_checklist(title, items, key_prefix):
     st.subheader(title)
     for idx, item in enumerate(items):
         item_key = f"{key_prefix}_item_{idx}"
@@ -181,6 +163,24 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
             if st.button("Close explanation", key=f"{toggle_key}_close"):
                 st.session_state[toggle_key] = False
 
+# --- Main app logic ---
+with st.form("sme_form"):
+    selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
+    company_name = st.text_input("Company Name")
+    contact_person = st.text_input("Your Name")
+    email = st.text_input("Your Email")
+    submitted = st.form_submit_button("Generate Application Guide")
+
+    if submitted and company_name.strip():
+        st.session_state.plan_generated = True
+        st.session_state.selected_grant = selected_grant
+        st.session_state.company_name = company_name.strip()
+        st.session_state.contact_person = contact_person.strip()
+        st.session_state.email = email.strip()
+
+if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
+    st.markdown("---")
+    st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
     checklist_items = roadmap.get(st.session_state.selected_grant, [])
     docs = doc_checklist.get(st.session_state.selected_grant, [])
@@ -248,4 +248,3 @@ def perform_reset():
 
 if st.session_state.get("plan_generated"):
     st.button("Reset Planner", on_click=perform_reset)
-
