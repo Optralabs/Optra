@@ -5,8 +5,6 @@ from openai import OpenAI
 from PIL import Image
 import base64
 from io import BytesIO
-import plotly.figure_factory as ff
-import pandas as pd
 import os
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -31,47 +29,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
-    tasks = roadmap.get(grant_name, [])
-    total_tasks = len(tasks)
-    if total_tasks == 0:
-        return None
-
-    duration_per_task = 2
-    buffer_days = 1 if include_buffer else 0
-    step = duration_per_task + buffer_days
-
-    segments = []
-    for i, task in enumerate(reversed(tasks)):
-        end = submission_date - timedelta(days=i * step)
-        start = end - timedelta(days=duration_per_task)
-        segments.append((task, start, end))
-
-    segments = segments[::-1]
-
-    colors = ["#3e6ce2", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
-
-    df = pd.DataFrame([{
-        "Task": task,
-        "Start": start,
-        "Finish": end,
-        "Resource": task
-    } for task, start, end in segments])
-
-    if df.empty:
-        st.warning("Timeline could not be generated due to missing data.")
-        return None
-
-    fig = ff.create_gantt(df, index_col="Resource", show_colorbar=True, group_tasks=True)
-    fig.update_layout(
-        plot_bgcolor="#0f111f",
-        paper_bgcolor="#0f111f",
-        font=dict(color="white"),
-        margin=dict(l=20, r=20, t=40, b=20),
-        height=450
-    )
-    return fig
 
 # ---------------------------- Sidebar UI & Theme ----------------------------
 st.markdown("""
@@ -110,7 +67,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ========= Data Structures =========
 roadmap = {
     "Productivity Solutions Grant (PSG)": [
         "Identify pre-approved vendor",
@@ -157,7 +113,6 @@ doc_checklist = {
     ]
 }
 
-# ========= App State Setup =========
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
 
@@ -166,7 +121,6 @@ if "plan_generated" not in st.session_state:
 if "selected_grant" not in st.session_state:
     st.session_state.selected_grant = None
 
-# ========= Main Form =========
 with st.form("sme_form"):
     selected_grant = st.selectbox("Select a Grant", list(roadmap.keys()))
     company_name = st.text_input("Company Name")
@@ -180,62 +134,6 @@ with st.form("sme_form"):
         st.session_state.company_name = company_name.strip()
         st.session_state.contact_person = contact_person.strip()
         st.session_state.email = email.strip()
-        
-# --- Segmented Timeline Chart (replacement for Gantt) ---
-def generate_segmented_timeline(grant_name, submission_date, include_buffer=True):
-    tasks = roadmap.get(grant_name, [])
-    total_tasks = len(tasks)
-    if total_tasks == 0:
-        return None
-
-    duration_per_task = 2
-    buffer_days = 1 if include_buffer else 0
-    step = duration_per_task + buffer_days
-
-    segments = []
-    for i, task in enumerate(reversed(tasks)):
-        end = submission_date - timedelta(days=i * step)
-        start = end - timedelta(days=duration_per_task)
-        segments.append((task, start, end))
-
-    segments = segments[::-1]
-
-    colors = ["#3e6ce2", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
-
-    fig = go.Figure()
-
-    for idx, (task, start, end) in enumerate(segments):
-        fig.add_trace(go.Scatter(
-            x=[start, end],
-            y=[1, 1],
-            mode='lines',
-            line=dict(color=colors[idx % len(colors)], width=16),
-            hovertemplate=f"<b>{task}</b><br>%{{x|%b %d}}<extra></extra>",
-            name=task
-        ))
-
-    fig.update_layout(
-        title=f"{grant_name} Application Timeline",
-        height=200,
-        margin=dict(l=40, r=40, t=60, b=40),
-        xaxis=dict(
-            title="Date",
-            tickformat="%b %d",
-            showgrid=True,
-            zeroline=False
-        ),
-        yaxis=dict(
-            showticklabels=False,
-            showgrid=False,
-            range=[0.5, 1.5],
-            fixedrange=True
-        ),
-        plot_bgcolor="#0a0a0a",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="white")
-    )
-
-    return fig
 
 def render_checklist(title, items, key_prefix):
     st.subheader(title)
@@ -274,12 +172,10 @@ def render_checklist(title, items, key_prefix):
                 unsafe_allow_html=True
             )
 
-
             if st.button("Close explanation", key=f"{toggle_key}_close"):
                 st.session_state[toggle_key] = False
-                
-if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
 
+if st.session_state.plan_generated and st.session_state.selected_grant in roadmap:
     st.markdown("---")
     st.subheader(f"Next Steps for {st.session_state.selected_grant}")
 
@@ -294,8 +190,8 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         with st.expander("Grant-Specific Document Checklist", expanded=True):
             render_checklist("", docs, f"doccheck_{st.session_state.selected_grant}")
 
-    # Move "Customize Timeline" and chart here, below the checklists
-    st.subheader("Customize Timeline")
+    st.markdown("---")
+    st.subheader("AI-Powered Dynamic Timeline")
 
     submission_date = st.date_input(
         "Target Submission Date", 
@@ -303,53 +199,40 @@ if st.session_state.plan_generated and st.session_state.selected_grant in roadma
         min_value=datetime.today()
     )
 
-    include_buffer = st.checkbox("Include 1 day buffer between tasks", value=True)
-
-    st.markdown("\n")
-    st.markdown("\n")
-
-    st.markdown("### Visual Grant Timeline")
-    fig = generate_gantt_timeline(
-        st.session_state.selected_grant,
-        submission_date,
-        include_buffer
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Call OpenAI with dynamic analysis prompt for the selected grant
-    with st.expander("AI Grant Analysis"):
-        if st.button("Generate Insights for Application Success"):
-            with st.spinner("Analyzing grant insights..."):
-                try:
-                    dynamic_prompt = f"""
-You are a grant advisor. Analyze the key steps and document readiness for a company preparing to apply for the {st.session_state.selected_grant}. 
-Company: {st.session_state.company_name}. Contact: {st.session_state.contact_person} ({st.session_state.email}).
-Submission Target: {submission_date.strftime('%Y-%m-%d')}.
-Give:
-1. Common mistakes SMEs make in this grant.
-2. Personalized preparation tips.
-3. Key do's and don'ts to improve chances.
+    if st.button("Generate Timeline Guide"):
+        with st.spinner("Generating detailed timeline..."):
+            prompt = f"""
+You are an expert grant consultant. Create a detailed, step-by-step action timeline for an SME applying for the {st.session_state.selected_grant}.
+Submission Date: {submission_date.strftime('%Y-%m-%d')}
+List the steps in a bullet format with short actionable instructions, organized by week or phase.
+Only return the formatted plan.
 """
-                    response = client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": "You are an expert in Singapore government grant processes for SMEs."},
-                            {"role": "user", "content": dynamic_prompt}
-                        ],
-                        temperature=0.5,
-                        max_tokens=700
-                    )
-
-                    insight = response.choices[0].message.content.strip()
-                    st.text_area("Insights from AI Reviewer", value=insight, height=300)
-                except Exception as e:
-                    st.error(f"Error: {e}")
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You help SMEs plan grant applications efficiently."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.6,
+                    max_tokens=800
+                )
+                timeline_text = response.choices[0].message.content.strip()
+                st.markdown("### Timeline Plan")
+                st.markdown(timeline_text)
+            except Exception as e:
+                st.error(f"Error generating timeline: {e}")
 
 else:
     st.info("Select a grant and click 'Generate Application Guide' to see your timeline and next steps.")
 
-st.markdown("---")
+def perform_reset():
+    for key in list(st.session_state.keys()):
+        if key.startswith("checklist_") or key.startswith("doccheck_") or key in ["plan_generated", "selected_grant", "company_name", "contact_person", "email"]:
+            del st.session_state[key]
+
+if st.session_state.get("plan_generated"):
+    st.button("Reset Planner", on_click=perform_reset)
 
 # ========= Reset Button =========
 def perform_reset():
