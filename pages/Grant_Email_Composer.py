@@ -32,7 +32,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---------------------------- Sidebar UI & Theme ----------------------------
+# Sidebar & theme styles unchanged...
 st.markdown("""
     <style>
         section[data-testid="stSidebar"] {
@@ -92,19 +92,17 @@ email_purpose = st.selectbox(
     ]
 )
 
-# Allow user to input their own name and email
+# Input fields
 sender_name = st.text_input("Your Name (Sender)", placeholder="Your Name")
 sender_email = st.text_input("Your Email", placeholder="e.g. yourname@example.com")
-
-# Other optional info
 company_name = st.text_input("Company Name", placeholder="e.g. Your Company Pte Ltd")
-
 recipient_name = st.text_input("Recipient Name", placeholder="Write Contact's Name Here")
 recipient_email = st.text_input("Recipient Email", placeholder="e.g. contact@vendor.com")
-
 additional_context = st.text_area(
     "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
 )
+
+generated_email = ""
 
 if st.button("Generate Email"):
     if not sender_name or not sender_email:
@@ -134,7 +132,6 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
 5. Optional context and request for follow-up.
 6. Signature block with name, company, and contact info.
 """
-
                 response = client.chat.completions.create(
                     model="gpt-4",
                     messages=[
@@ -144,42 +141,22 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     temperature=0.6,
                     max_tokens=600
                 )
-
                 generated_email = response.choices[0].message.content.strip()
-                st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
-
-                # Copy to clipboard button styled same as Generate Email button
-                copy_button_code = f"""
-                <button id="copy-btn" class="stButton" style="
-                    background-color: #3e6ce2;
-                    color: white;
-                    border: none;
-                    padding: 0.375rem 0.75rem;
-                    font-size: 1rem;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    margin-top: 1rem;
-                ">
-                    Copy Email to Clipboard
-                </button>
-
-                <textarea id="email-text" style="position: absolute; left: -9999px; top: 0;">{generated_email.replace('"', '&quot;')}</textarea>
-
-                <script>
-                const copyBtn = document.getElementById('copy-btn');
-                const emailText = document.getElementById('email-text');
-                copyBtn.addEventListener('click', () => {{
-                    emailText.select();
-                    navigator.clipboard.writeText(emailText.value).then(() => {{
-                        alert('Email copied to clipboard!');
-                    }}).catch(err => {{
-                        alert('Failed to copy text: ' + err);
-                    }});
-                }});
-                </script>
-                """
-
-                st.components.v1.html(copy_button_code, height=60)
-
+                st.session_state.generated_email = generated_email
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
+
+if "generated_email" in st.session_state:
+    st.text_area("Generated Email", value=st.session_state.generated_email, height=250, key="email_output")
+
+    if st.button("Copy Email to Clipboard"):
+        st.components.v1.html(f"""
+            <script>
+                const text = `{st.session_state.generated_email.replace('`', '\\`')}`;
+                navigator.clipboard.writeText(text).then(() => {{
+                    alert("Email copied to clipboard!");
+                }}).catch(() => {{
+                    alert("Failed to copy email to clipboard.");
+                }});
+            </script>
+        """, height=0, scrolling=False)
