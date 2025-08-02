@@ -147,7 +147,6 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
 
                 generated_email = response.choices[0].message.content.strip()
                 st.text_area("Generated Email", value=generated_email, height=250)
-
                 st.download_button("Copy to Clipboard", data=generated_email, file_name="generated_email.txt", mime="text/plain")
 
             except Exception as e:
