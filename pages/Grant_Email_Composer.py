@@ -146,24 +146,41 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                 )
 
                 generated_email = response.choices[0].message.content.strip()
-                st.session_state.generated_email = generated_email  # save for clipboard use
-
                 st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
+
+                # Copy to clipboard button with hidden textarea workaround
+                copy_button_code = f"""
+                <button id="copy-btn" style="
+                    background-color: #3e6ce2;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-top: 10px;
+                ">
+                    Copy Email to Clipboard
+                </button>
+
+                <textarea id="email-text" style="position: absolute; left: -9999px; top: 0;">{generated_email.replace('"', '&quot;')}</textarea>
+
+                <script>
+                const copyBtn = document.getElementById('copy-btn');
+                const emailText = document.getElementById('email-text');
+                copyBtn.addEventListener('click', () => {{
+                    emailText.select();
+                    navigator.clipboard.writeText(emailText.value).then(() => {{
+                        alert('Email copied to clipboard!');
+                    }}).catch(err => {{
+                        alert('Failed to copy text: ' + err);
+                    }});
+                }});
+                </script>
+                """
+
+                st.components.v1.html(copy_button_code, height=60)
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
 
-if st.button("Copy Email to Clipboard", key="copy_email_btn"):
-    if "generated_email" in st.session_state:
-        safe_email = st.session_state.generated_email.replace("`", "\\`").replace("\\", "\\\\")
-        st.components.v1.html(f"""
-        <script>
-        navigator.clipboard.writeText(`{safe_email}`).then(() => {{
-            alert("Email copied to clipboard!");
-        }}).catch(err => {{
-            alert("Failed to copy email to clipboard. Please copy manually.");
-        }});
-        </script>
-        """, height=0)
-    else:
-        st.warning("Generate an email first before copying.")
+
