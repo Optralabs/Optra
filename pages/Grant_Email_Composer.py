@@ -148,16 +148,22 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                 generated_email = response.choices[0].message.content.strip()
                 st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
 
-                if st.button("Copy Email to Clipboard"):
-                    st.components.v1.html(f"""
-                    <script>
-                    const text = `{generated_email.replace('`', '\\`')}`;
-                    navigator.clipboard.writeText(text).then(() => {{
-                        alert("Email copied to clipboard!");
+                st.markdown(f"""
+                <button onclick="
+                    navigator.clipboard.writeText(`{generated_email.replace('`', '\\`')}`).then(() => {{
+                        alert('Email copied to clipboard!');
                     }});
-                    </script>
-                    """, height=0)
-
+                " style="
+                    background-color: #3e6ce2; 
+                    color: white; 
+                    border: none; 
+                    padding: 8px 16px; 
+                    border-radius: 8px; 
+                    cursor: pointer;
+                ">
+                Copy Email to Clipboard
+                </button>
+                """, unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
