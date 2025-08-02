@@ -55,9 +55,13 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
     df = pd.DataFrame([{
         "Task": task,
         "Start": start,
-        "End": end,
+        "Finish": end,
         "Resource": task
     } for task, start, end in segments])
+
+    if df.empty:
+        st.warning("Timeline could not be generated due to missing data.")
+        return None
 
     fig = ff.create_gantt(df, index_col="Resource", show_colorbar=True, group_tasks=True)
     fig.update_layout(
@@ -68,7 +72,6 @@ def generate_gantt_timeline(grant_name, submission_date, include_buffer=True):
         height=450
     )
     return fig
-
 
 # ---------------------------- Sidebar UI & Theme ----------------------------
 st.markdown("""
