@@ -145,18 +145,25 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     max_tokens=600
                 )
 
-                st.session_state.generated_email = response.choices[0].message.content.strip()
+                generated_email = response.choices[0].message.content.strip()
+                st.session_state.generated_email = generated_email  # save for clipboard use
+
+                st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
 
-if "generated_email" in st.session_state:
-    st.text_area("Generated Email", value=st.session_state.generated_email, height=250, key="email_output")
-
-    if st.button("Copy Email to Clipboard", key="copy_email_btn"):
-        try:
-            import pyperclip
-            pyperclip.copy(st.session_state.generated_email)
-            st.toast("Email copied to clipboard!")
-        except Exception:
-            st.error("Failed to copy email to clipboard. Please copy manually.")
+if st.button("Copy Email to Clipboard", key="copy_email_btn"):
+    if "generated_email" in st.session_state:
+        safe_email = st.session_state.generated_email.replace("`", "\\`").replace("\\", "\\\\")
+        st.components.v1.html(f"""
+        <script>
+        navigator.clipboard.writeText(`{safe_email}`).then(() => {{
+            alert("Email copied to clipboard!");
+        }}).catch(err => {{
+            alert("Failed to copy email to clipboard. Please copy manually.");
+        }});
+        </script>
+        """, height=0)
+    else:
+        st.warning("Generate an email first before copying.")
