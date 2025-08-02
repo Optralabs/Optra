@@ -148,16 +148,17 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                 generated_email = response.choices[0].message.content.strip()
                 st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
 
-                # Copy to clipboard button with hidden textarea workaround
+                # Copy to clipboard button styled same as Generate Email button
                 copy_button_code = f"""
-                <button id="copy-btn" style="
+                <button id="copy-btn" class="stButton" style="
                     background-color: #3e6ce2;
                     color: white;
                     border: none;
-                    padding: 8px 16px;
+                    padding: 0.375rem 0.75rem;
+                    font-size: 1rem;
                     border-radius: 8px;
                     cursor: pointer;
-                    margin-top: 10px;
+                    margin-top: 1rem;
                 ">
                     Copy Email to Clipboard
                 </button>
