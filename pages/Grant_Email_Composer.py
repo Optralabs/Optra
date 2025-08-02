@@ -106,10 +106,6 @@ additional_context = st.text_area(
     "Add any extra context or specific requests (optional)", placeholder="e.g. Need the quote by next Tuesday..."
 )
 
-# Initialize session_state variable for email storage
-if "generated_email" not in st.session_state:
-    st.session_state.generated_email = ""
-
 if st.button("Generate Email"):
     if not sender_name or not sender_email:
         st.warning("Please provide both your name and email.")
@@ -149,33 +145,45 @@ Ensure the tone is polite, helpful, and adapted to an SME context. Include:
                     max_tokens=600
                 )
 
-                st.session_state.generated_email = response.choices[0].message.content.strip()
+                generated_email = response.choices[0].message.content.strip()
+                # Store generated email in session state to preserve
+                st.session_state.generated_email = generated_email
+
+                st.text_area("Generated Email", value=generated_email, height=250, key="email_output")
+
+                # Inject a proper working copy button with JS inside iframe
+                copy_button_code = f"""
+                <button id="copy-btn" style="
+                    background-color: #3e6ce2;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-top: 10px;
+                ">
+                    Copy Email to Clipboard
+                </button>
+
+                <script>
+                const copyBtn = document.getElementById('copy-btn');
+                copyBtn.addEventListener('click', () => {{
+                    const textarea = document.querySelector('textarea[aria-label="Generated Email"]');
+                    if(textarea) {{
+                        textarea.select();
+                        navigator.clipboard.writeText(textarea.value).then(() => {{
+                            alert('Email copied to clipboard!');
+                        }}).catch(err => {{
+                            alert('Failed to copy text: ' + err);
+                        }});
+                    }} else {{
+                        alert('Could not find the email text area.');
+                    }}
+                }});
+                </script>
+                """
+
+                st.components.v1.html(copy_button_code, height=60)
 
             except Exception as e:
                 st.error(f"Failed to generate email. Error: {e}")
-
-if st.session_state.generated_email:
-    st.text_area("Generated Email", value=st.session_state.generated_email, height=250, key="email_output")
-
-    # Custom Copy Button using JS that copies textarea content
-    st.markdown(f"""
-    <button onclick="
-        const textarea = window.parent.document.querySelector('textarea[data-key=email_output]');
-        if (textarea) {{
-            navigator.clipboard.writeText(textarea.value).then(() => {{
-                alert('Email copied to clipboard!');
-            }});
-        }} else {{
-            alert('Failed to find the email text area!');
-        }}
-    " style="
-        background-color: #3e6ce2; 
-        color: white; 
-        border: none; 
-        padding: 8px 16px; 
-        border-radius: 8px; 
-        cursor: pointer;
-    ">
-    Copy Email to Clipboard
-    </button>
-    """, unsafe_allow_html=True)
