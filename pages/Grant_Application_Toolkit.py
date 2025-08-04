@@ -6,6 +6,7 @@ from PIL import Image
 import base64
 from io import BytesIO
 import os
+import json
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -68,51 +69,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-roadmap = {
-    "Productivity Solutions Grant (PSG)": [
-        "Identify pre-approved vendor",
-        "Get a quotation",
-        "Submit application on Business Grants Portal"
-    ],
-    "Enterprise Development Grant (EDG)": [
-        "Define project scope",
-        "Prepare project proposal",
-        "Submit application on BGP"
-    ],
-    "Market Readiness Assistance (MRA)": [
-        "Identify overseas opportunity",
-        "Engage consultant or service provider",
-        "Submit application"
-    ],
-    "Startup SG Founder": [
-        "Attend mandatory workshop",
-        "Prepare business proposal",
-        "Submit through Accredited Mentor Partner"
-    ]
-}
+# Load JSON data for grants
+def load_grant_data(json_path):
+    with open(json_path, 'r') as f:
+        return json.load(f)
 
-doc_checklist = {
-    "Enterprise Development Grant (EDG)": [
-        "Audited Financial Statements",
-        "Project Proposal",
-        "Quotations from vendors"
-    ],
-    "Productivity Solutions Grant (PSG)": [
-        "Latest ACRA Bizfile",
-        "Vendor Quotation",
-        "Company Bank Statement"
-    ],
-    "Market Readiness Assistance (MRA)": [
-        "Company Registration Info",
-        "Overseas Marketing Plan",
-        "Quotation from Consultant"
-    ],
-    "Startup SG Founder": [
-        "Pitch Deck",
-        "Mentor Endorsement",
-        "Workshop Certificate"
-    ]
-}
+grants_data = load_grant_data("data/grants_data.json")
+
+roadmap = {grant: data["roadmap"] for grant, data in grants_data.items()}
+doc_checklist = {grant: data["doc_checklist"] for grant, data in grants_data.items()}
 
 st.title("Application Readiness Hub")
 st.markdown("This tool guides you through preparing for your selected grant application.")
