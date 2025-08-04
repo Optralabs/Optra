@@ -1,0 +1,216 @@
+[
+    {
+        "grant_name": "Productivity Solutions Grant (PSG)",
+        "agency": "Enterprise Singapore",
+        "description": "Supports SMEs in adopting IT solutions and equipment to enhance business processes.",
+        "eligibility_criteria": [
+            "Registered and operating in Singapore",
+            "Purchase/subscription of IT solutions/equipment must be used in Singapore",
+            "Minimum 30% local shareholding"
+        ],
+        "funding_support": "Up to 50% of qualifying costs",
+        "application_process": [
+            "Identify suitable pre-approved solution from GoBusiness",
+            "Get a quotation from vendor",
+            "Submit application via Business Grants Portal",
+            "Wait for approval before purchase"
+        ],
+        "required_documents": [
+            "ACRA Bizfile",
+            "Vendor quotation",
+            "Past 6 months' financial statements",
+            "Latest CPF contribution statement"
+        ]
+    },
+    {
+        "grant_name": "Enterprise Development Grant (EDG)",
+        "agency": "Enterprise Singapore",
+        "description": "Supports projects that help businesses grow and transform under three pillars: Core Capabilities, Innovation and Productivity, Market Access.",
+        "eligibility_criteria": [
+            "Registered and operating in Singapore",
+            "Minimum 30% local shareholding",
+            "Be in a financially viable position to start and complete the project"
+        ],
+        "funding_support": "Up to 70% of qualifying costs",
+        "application_process": [
+            "Identify project scope and engage a certified consultant (if needed)",
+            "Prepare proposal and cost estimates",
+            "Submit application via Business Grants Portal",
+            "Implement only after approval"
+        ],
+        "required_documents": [
+            "Project proposal",
+            "Vendor quotations",
+            "Company financial statements",
+            "ACRA Bizfile"
+        ]
+    },
+    {
+        "grant_name": "SkillsFuture Enterprise Credit (SFEC)",
+        "agency": "SkillsFuture Singapore",
+        "description": "Provides additional support for enterprises to undertake enterprise and workforce transformation initiatives.",
+        "eligibility_criteria": [
+            "Have contributed at least $750 Skills Development Levy over qualifying period",
+            "Have at least 3 Singapore Citizens or PRs employed"
+        ],
+        "funding_support": "Up to $10,000 credit to cover 90% of out-of-pocket expenses",
+        "application_process": [
+            "Undertake SFEC-supported programmes",
+            "Submit claims through respective grant portals",
+            "Credits will be automatically applied if eligible"
+        ],
+        "required_documents": [
+            "Proof of training or project",
+            "Relevant invoices",
+            "Company UEN"
+        ]
+    },
+    {
+        "grant_name": "Market Readiness Assistance (MRA)",
+        "agency": "Enterprise Singapore",
+        "description": "Supports SMEs to take their business overseas through market expansion activities.",
+        "eligibility_criteria": [
+            "Business entity registered and operating in Singapore",
+            "Minimum 30% local shareholding",
+            "Group annual sales turnover < S$100 million OR employment < 200"
+        ],
+        "funding_support": "Up to 50% of eligible costs capped at $100,000 per new market",
+        "application_process": [
+            "Identify overseas expansion activities",
+            "Get a quotation from pre-approved vendors",
+            "Submit application via Business Grants Portal",
+            "Await approval"
+        ],
+        "required_documents": [
+            "ACRA Bizfile",
+            "Vendor proposal/quotation",
+            "International marketing strategy",
+            "Financial statements"
+        ]
+    },
+    {
+        "grant_name": "Energy Efficiency Grant (EEG)",
+        "agency": "Enterprise Singapore",
+        "description": "Supports the adoption of pre-approved energy-efficient equipment in food services, manufacturing and retail sectors.",
+        "eligibility_criteria": [
+            "Business entity registered and operating in Singapore",
+            "Minimum 30% local shareholding",
+            "Be in food services, manufacturing or retail"
+        ],
+        "funding_support": "Up to 70% of qualifying costs",
+        "application_process": [
+            "Choose from list of pre-approved equipment",
+            "Get quotation from vendor",
+            "Apply via Business Grants Portal"
+        ],
+        "required_documents": [
+            "Equipment quotation",
+            "ACRA Bizfile",
+            "Energy savings estimation"
+        ]
+    },
+    {
+        "grant_name": "Agri-Food Cluster Transformation Fund (ACT)",
+        "agency": "Singapore Food Agency",
+        "description": "Supports productivity improvements and technology adoption for local farms.",
+        "eligibility_criteria": [
+            "Farms licensed by SFA",
+            "Projects that improve productivity or sustainability"
+        ],
+        "funding_support": "Up to 70% of qualifying costs",
+        "application_process": [
+            "Prepare proposal for productivity-enhancing project",
+            "Submit application through ACT system",
+            "Await evaluation"
+        ],
+        "required_documents": [
+            "Farm license",
+            "Detailed project proposal",
+            "Financial statements",
+            "Quotations for technology/equipment"
+        ]
+    },
+    {
+        "grant_name": "GoCloud",
+        "agency": "Infocomm Media Development Authority (IMDA)",
+        "description": "Helps SMEs adopt cloud-native architecture and DevOps practices.",
+        "eligibility_criteria": [
+            "SME registered and operating in Singapore",
+            "Minimum 30% local shareholding",
+            "Be in ICT or software development"
+        ],
+        "funding_support": "Up to 80% of qualifying costs",
+        "application_process": [
+            "Engage IMDA pre-approved consultants",
+            "Submit project proposal to IMDA",
+            "Undergo onboarding and assessment"
+        ],
+        "required_documents": [
+            "Proposal for cloud migration",
+            "Company ACRA profile",
+            "Consultant quotation"
+        ]
+    },
+    {
+        "grant_name": "Digital Acceleration Grant (DAG)",
+        "agency": "Monetary Authority of Singapore (MAS)",
+        "description": "Supports smaller financial institutions and FinTech firms to adopt digital solutions.",
+        "eligibility_criteria": [
+            "Licensed financial institutions in Singapore",
+            "Project should be innovation or productivity enhancing"
+        ],
+        "funding_support": "Up to 80% of qualifying costs",
+        "application_process": [
+            "Prepare digitalisation project plan",
+            "Submit grant application to MAS",
+            "Commence project upon approval"
+        ],
+        "required_documents": [
+            "Digital strategy",
+            "Financial statements",
+            "Vendor proposals"
+        ]
+    },
+    {
+        "grant_name": "EDB New Market Support Programme (NMSP)",
+        "agency": "Economic Development Board",
+        "description": "Supports large local enterprises in expanding into new international markets.",
+        "eligibility_criteria": [
+            "Singapore-based companies with >30% local shareholding",
+            "Annual turnover >S$100M",
+            "Expanding to new overseas market"
+        ],
+        "funding_support": "Up to 70% of eligible expenses",
+        "application_process": [
+            "Submit application to EDB",
+            "Include market entry strategy",
+            "Receive grant disbursement post project"
+        ],
+        "required_documents": [
+            "Overseas expansion plan",
+            "Financials",
+            "Supporting documents for costs"
+        ]
+    },
+    {
+        "grant_name": "Startup SG Founder",
+        "agency": "Enterprise Singapore",
+        "description": "Supports first-time entrepreneurs with mentorship and startup capital.",
+        "eligibility_criteria": [
+            "Singapore Citizen or PR",
+            "First-time founder",
+            "Company <6 months old"
+        ],
+        "funding_support": "Matched $1 for every $1 raised by startup, up to $50,000",
+        "application_process": [
+            "Apply via Accredited Mentor Partners (AMPs)",
+            "Submit business plan",
+            "Attend interview and validation"
+        ],
+        "required_documents": [
+            "Business proposal",
+            "Proof of fundraising",
+            "Founder's NRIC/FIN"
+        ]
+    }
+]
