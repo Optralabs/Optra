@@ -11,6 +11,14 @@ from io import BytesIO
 import pdfplumber
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from feedback import get_past_good_answers, show_feedback_ui
+from globals import *
+
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))
+
+from globals import *
 
 def generate_pdf(content: str) -> bytes:
     pdf = FPDF()
@@ -29,17 +37,22 @@ def generate_pdf(content: str) -> bytes:
 def clean_text(text):
     return text.encode('latin1', 'replace').decode('latin1')
 
-
-
-
 # ----------------------------
 # Load and embed OPTRA logo
 # ----------------------------
-from PIL import Image
-import base64
-from io import BytesIO
 import streamlit as st
+from PIL import Image
+from io import BytesIO
+import base64
 
+# Favicon and layout config (MUST come first)
+st.set_page_config(
+    page_title="Smart Grant Advisor",
+    page_icon=Image.open("optra_logo_transparent.png"),
+    layout="wide"
+)
+
+# Your existing OPTRA logo banner (no changes needed)
 def get_logo_base64(path, width=80):
     img = Image.open(path)
     img = img.resize((width, width), Image.Resampling.LANCZOS)
@@ -47,13 +60,11 @@ def get_logo_base64(path, width=80):
     img.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode()
 
-# Set your logo path
 logo_base64 = get_logo_base64("optra_logo_transparent.png")
 
-# Display logo and brand (only once)
 st.markdown(
     f"""
-    <div style='display: flex; align-items: center; margin-bottom: 2rem;'>
+    <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
         <img src='data:image/png;base64,{logo_base64}' width='80' style='margin-right: 15px;' />
         <div>
             <h1 style='margin: 0; font-size: 1.8rem;'>OPTRA</h1>
@@ -65,6 +76,47 @@ st.markdown(
 
 st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
 # Set page config
+
+import streamlit as st
+import base64
+from PIL import Image
+from io import BytesIO
+import os
+
+def get_logo_base64(path, size=32):
+    img = Image.open(path)
+    img = img.resize((size, size), Image.Resampling.LANCZOS)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
+
+import streamlit as st
+import base64
+from PIL import Image
+from io import BytesIO
+
+def get_logo_base64(path="optra_logo_transparent.png", size=32):
+    try:
+        img = Image.open(path)
+        img = img.resize((size, size), Image.Resampling.LANCZOS)
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode()
+    except Exception as e:
+        return None
+
+def set_favicon():
+    logo_base64 = get_logo_base64()
+    if logo_base64:
+        st.markdown(
+            f"""
+            <link rel="icon" type="image/png" href="data:image/png;base64,{logo_base64}">
+            """,
+            unsafe_allow_html=True
+        )
+
+# Call the function to apply the favicon
+set_favicon()
 
 # ----------------------------
 # 🧩 OPTRA Sidebar Setup
@@ -95,8 +147,10 @@ st.markdown("""
 Welcome to **Smart Grant Advisor** — your AI-powered tool to help Singapore SMEs navigate complex government grants.
 
 Use the sidebar to:
--  Upload and review documents with the **Document Checker**
--  Access **Live Grant Insights**
+-  Upload and analyse documents instantly with the **Grant Application Reviewer**
+-  Plan your application journey and track milestones with the **Grant Application Toolkit**
+-  Craft professional, grant‑ready emails using the **Grant Email Composer**
+-  Stay informed with the latest updates from the **Singapore Grant Newsfeed**
 
 ---
 """)
@@ -288,73 +342,90 @@ else:
 
 # === Check Eligibility ===
 if st.button("Check Eligibility"):
+    # === ✅ Ensure session_state stores required feedback context ===
+    st.session_state["page_name"] = "Home"
+    st.session_state["grant_type"] = goal  # Primary Grant Objective
+    st.session_state["industry"] = industry
+
     with st.spinner("Analyzing eligibility..."):
         try:
-            eligibility_prompt = f"""
-You are Smart Grant Advisor, an expert consultant on Singapore government grants specifically for SMEs.
+            # ✅ Retrieve past good answers for similar queries
+            past_answers = get_past_good_answers(f"{industry} | {goal} | {digital_adoption}")
+            if past_answers:
+                past_context_block = "Here are past highly-rated answers to similar cases:\n" + "\n\n".join(past_answers)
+            else:
+                past_context_block = ""
 
-Given the detailed business information below, provide a comprehensive eligibility assessment for applicable government grants. Consider the SME's industry, business size, years of operation, local ownership, digital adoption level, business stage, and grant goals.
+            # ✅ Retrieve relevant context from Pinecone
+            pinecone_context = get_pinecone_context(
+                user_id="test_user",  # TODO: Replace with Supabase-authenticated user ID
+                query=f"{industry} {goal} {digital_adoption}",
+                top_k=5
+            )
 
-Analyze suitability for these key Singapore government grants and schemes, but also mention any other relevant grants that may fit the profile:
+            # ✅ Build eligibility prompt (safe, no backslash issues)
+            eligibility_prompt_with_context = (
+                "You are Smart Grant Advisor, an expert consultant on Singapore government grants specifically for SMEs.\n\n"
+                "Here is relevant information from the user's past uploaded documents and stored data:\n"
+                f"{pinecone_context}\n\n"
+                f"{past_context_block}\n\n"
+                "Given the detailed business information below, provide a comprehensive eligibility assessment for applicable government grants. "
+                "Consider the SME's industry, business size, years of operation, local ownership, digital adoption level, business stage, and grant goals.\n\n"
+                "Analyze suitability for these key Singapore government grants and schemes, but also mention any other relevant grants that may fit the profile:\n\n"
+                "- Productivity Solutions Grant (PSG)\n"
+                "- Enterprise Development Grant (EDG)\n"
+                "- SkillsFuture Enterprise Credit (SFEC)\n"
+                "- Career Trial Grant (CTG)\n"
+                "- Workforce Singapore P-Max (WSG P-Max)\n"
+                "- Startup SG Tech\n"
+                "- Enterprise Financing Scheme (EFS)\n"
+                "- Agri-Food Cluster Transformation (ACT)\n"
+                "- Marine Shipyard Grant\n"
+                "- Energy Efficiency Fund (E2F)\n"
+                "- Green Incentive Programme (GIP)\n"
+                "- Other sector-specific, innovation, or transformation-focused grants\n\n"
+                f"### Business Information:\n"
+                f"- Industry / Sector: {industry}\n"
+                f"- Annual Revenue (SGD): {revenue if revenue is not None else 'Not Provided'}\n"
+                f"- Number of Employees: {employees if employees is not None else 'Not Provided'}\n"
+                f"- Years in Operation: {years if years is not None else 'Not Provided'}\n"
+                f"- Business Stage: {business_stage}\n"
+                f"- Local Ownership ≥30%: {ownership}\n"
+                f"- Level of Digital Adoption: {digital_adoption}\n"
+                f"- Primary Grant Objective / Goal: {goal}\n"
+                f"- Additional Goal Details: {additional_goal if additional_goal.strip() != '' else 'None'}\n\n"
+                f"### SFEC Specific Details:\n"
+                f"- Skills Development Levy Paid Last Year (SGD): {skills_levy_paid if skills_levy_paid is not None else 'Not Provided'}\n"
+                f"- Number of Local Employees: {local_employees if local_employees is not None else 'Not Provided'}\n"
+                f"- Outstanding MOM or IRAS Violations: {'Yes' if violations else 'No'}\n\n"
+                "Please provide your response in clear, professional markdown format with the following sections:\n\n"
+                "1. **Eligible Grants**\n   List all grants the SME is likely eligible for based on the provided data. For each, explain *why* the SME qualifies, highlighting specific criteria met.\n\n"
+                "2. **Potential Disqualifiers or Missing Information**\n   Identify any factors or missing data that may disqualify or limit eligibility. Offer advice on how to address or improve these areas.\n\n"
+                "3. **Required Documents and Evidence**\n   Suggest the essential documents or evidence the SME should prepare for each relevant grant application.\n\n"
+                "4. **Additional Recommendations**\n   Offer strategic advice or best practices to improve grant application success, such as timing, combining grants, or building capabilities.\n\n"
+                "5. **Other Relevant Grants or Incentives**\n   Suggest any lesser-known or niche grants that may suit the SME’s profile, particularly for their industry or business goals.\n\n"
+                "Maintain a balance of professionalism and simplicity to ensure SMEs without deep grant expertise can easily understand and act on your advice.\n"
+                "Please return your response in markdown format, structured with headings and bullet points for easy readability by SME owners."
+            )
 
-- Productivity Solutions Grant (PSG)
-- Enterprise Development Grant (EDG)
-- SkillsFuture Enterprise Credit (SFEC)
-- Career Trial Grant (CTG)
-- Workforce Singapore P-Max (WSG P-Max)
-- Startup SG Tech
-- Enterprise Financing Scheme (EFS)
-- Agri-Food Cluster Transformation (ACT)
-- Marine Shipyard Grant
-- Energy Efficiency Fund (E2F)
-- Green Incentive Programme (GIP)
-- Other sector-specific, innovation, or transformation-focused grants
-
-### Business Information:
-- Industry / Sector: {industry}
-- Annual Revenue (SGD): {revenue if revenue is not None else 'Not Provided'}
-- Number of Employees: {employees if employees is not None else 'Not Provided'}
-- Years in Operation: {years if years is not None else 'Not Provided'}
-- Business Stage: {business_stage}
-- Local Ownership ≥30%: {ownership}
-- Level of Digital Adoption: {digital_adoption}
-- Primary Grant Objective / Goal: {goal}
-- Additional Goal Details: {additional_goal if additional_goal.strip() != '' else 'None'}
-
-### SFEC Specific Details:
-- Skills Development Levy Paid Last Year (SGD): {skills_levy_paid if skills_levy_paid is not None else 'Not Provided'}
-- Number of Local Employees: {local_employees if local_employees is not None else 'Not Provided'}
-- Outstanding MOM or IRAS Violations: {"Yes" if violations else "No"}
-
-Please provide your response in clear, professional markdown format with the following sections:
-
-1. **Eligible Grants**  
-   List all grants the SME is likely eligible for based on the provided data. For each, explain *why* the SME qualifies, highlighting specific criteria met.
-
-2. **Potential Disqualifiers or Missing Information**  
-   Identify any factors or missing data that may disqualify or limit eligibility. Offer advice on how to address or improve these areas.
-
-3. **Required Documents and Evidence**  
-   Suggest the essential documents or evidence the SME should prepare for each relevant grant application.
-
-4. **Additional Recommendations**  
-   Offer strategic advice or best practices to improve grant application success, such as timing, combining grants, or building capabilities.
-
-5. **Other Relevant Grants or Incentives**  
-   Suggest any lesser-known or niche grants that may suit the SME’s profile, particularly for their industry or business goals.
-
-Maintain a balance of professionalism and simplicity to ensure SMEs without deep grant expertise can easily understand and act on your advice.
-Please return your response in markdown format, structured with headings and bullet points for easy readability by SME owners.
-"""
+            # ✅ Call OpenAI API
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a helpful, accurate, and business-friendly grant advisor for Singapore SMEs."},
-                    {"role": "user", "content": eligibility_prompt}
+                    {"role": "user", "content": eligibility_prompt_with_context}
                 ]
             )
+
+            # ✅ Save API output
             st.session_state.response_text = response.choices[0].message.content
+
+            # ✅ Save for feedback loop tracking (using SUPABASE_SERVICE_ROLE_KEY in feedback.py)
+            st.session_state["last_query"] = eligibility_prompt_with_context
+            st.session_state["last_ai_output"] = st.session_state.response_text
+
             st.success("Eligibility analysis complete.")
+
         except Exception as e:
             st.error(f"OpenAI API error: {e}")
 
@@ -371,7 +442,6 @@ if st.session_state.get("response_text"):
     st.text_area("Preview of Report", value=st.session_state.response_text, height=300)
 else:
     st.info("Fill in your business details and click 'Check Eligibility' to get a tailored grant report.")
-
 
 # === Upload Supporting Business Document ===
 st.markdown("---")
@@ -390,6 +460,19 @@ if uploaded_file:
         auto_data = extract_data_from_text(all_text)
         st.success("Document uploaded and analyzed.")
         st.text_area("Extracted Content (preview)", doc_summary, height=180)
+
+        # === Store in Pinecone immediately ===
+        try:
+            user_id = "test_user"  # TODO: Replace with actual logged-in user ID from Supabase
+            add_document(
+                text=all_text,
+                doc_id_prefix=f"userdoc_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                metadata={"type": "grant_doc", "source": "upload"},
+                user_id=user_id
+            )
+            st.info("📌 Document saved to Pinecone for future context and search.")
+        except Exception as e:
+            st.warning(f"Could not store document in Pinecone: {e}")
 
         if st.button("Run Document Analysis"):
             with st.spinner("Analyzing document with OpenAI..."):
@@ -419,10 +502,7 @@ Please:
     except Exception as e:
         st.warning(f"Could not read PDF: {e}")
 
-
-
 st.markdown("---")
-
 
 # === Main App UI ===
 st.set_page_config(page_title="Smart Grant Advisor", layout="wide")
@@ -518,17 +598,16 @@ if st.button("Submit"):
             except Exception as e:
                 st.error(f"API error: {e}")
 else:
-    st.info("Type your question above and click 'Submit' to get a response.")
+    st.info("Type your question above and click 'Submit FAQ' to get a response.")
 
 st.markdown("---")
 
-
-# === Feedback Section ===
-st.subheader("Feedback")
-with st.form("feedback_form"):
-    feedback = st.text_area("Your feedback")
-    if st.form_submit_button("Submit"):
-        st.success("Thank you for your feedback!")
+# === Unified Feedback Loop ===
+if "last_ai_output" in st.session_state and st.session_state["last_ai_output"]:
+    show_feedback_ui(
+        st.session_state.get("last_query", ""),
+        st.session_state.get("last_ai_output", "")
+    )
 
 # === Footer ===
 st.markdown("---")
@@ -538,5 +617,35 @@ Not affiliated with GoBusiness or EnterpriseSG. Always confirm details at:
 https://www.gobusiness.gov.sg or https://www.enterprisesg.gov.sg
 """)
 
+# =========================
+# Save all key interactions to Pinecone
+# =========================
 
+# 1. Save Eligibility Results
+if st.session_state.get("last_ai_output"):
+    save_user_interaction(
+        interaction_type="eligibility_result",
+        content=st.session_state["last_ai_output"],
+        metadata={
+            "page": "eligibility_checker",
+            "industry": st.session_state.get("industry"),
+            "grant_type": st.session_state.get("grant_type")
+        }
+    )
+
+# 2. Save FAQ Q&A
+if "faq" in locals() and faq.strip() and st.session_state.get("last_ai_output"):
+    save_user_interaction(
+        interaction_type="faq_answer",
+        content=f"Q: {faq}\nA: {st.session_state['last_ai_output']}",
+        metadata={"page": "faq"}
+    )
+
+# 3. Save Uploaded Document Info
+if "uploaded_file" in locals() and uploaded_file:
+    save_user_interaction(
+        interaction_type="uploaded_doc",
+        content=f"Uploaded: {uploaded_file.name}",
+        metadata={"page": "grant_application_reviewer"}
+    )
 
