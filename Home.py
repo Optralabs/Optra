@@ -14,6 +14,10 @@ from dotenv import load_dotenv
 from feedback import get_past_good_answers, show_feedback_ui
 from globals import *
 
+from access_control import show_locked_sidebar
+
+show_locked_sidebar()
+
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
