@@ -9,9 +9,6 @@ import urllib.parse
 
 from access_control import page_lock
 
-show_locked_sidebar()
-page_lock("Grant Newsfeed")  # Replace with your actual page name
-
 # Set page config once at the very top
 st.set_page_config(
     page_title="Smart Grant Advisor",
