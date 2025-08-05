@@ -11,8 +11,8 @@ from io import BytesIO
 import pdfplumber
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from feedback import get_past_good_answers, show_feedback_ui
-from globals import *
+from modules.feedback import get_past_good_answers, show_feedback_ui
+from modules.globals import *
 
 import sys
 from pathlib import Path
