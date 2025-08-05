@@ -10,9 +10,13 @@ import pytesseract
 import fitz
 import base64
 
+from access_control import page_lock
+
+page_lock ("Grant Application Reviewer")
+
 # === App Config ===
 st.set_page_config(
-    page_title="🔒 Grant Document Checker",
+    page_title="Grant Document Checker",
     page_icon="optra_logo_transparent.png",
     layout="wide"
 )
