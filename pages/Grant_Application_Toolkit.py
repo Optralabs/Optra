@@ -8,6 +8,11 @@ from io import BytesIO
 import os
 import json
 
+from access_control import page_lock, show_locked_sidebar
+
+show_locked_sidebar()
+page_lock("Grant Application Toolkit")
+
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def get_logo_base64(path, width=80):
