@@ -9,6 +9,11 @@ import plotly.figure_factory as ff
 import pandas as pd
 import os
 
+from access_control import page_lock, show_locked_sidebar
+
+show_locked_sidebar()
+page_lock("Grant Application Toolkit")  # Replace with your actual page name
+
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def get_logo_base64(path, width=80):
