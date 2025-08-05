@@ -9,7 +9,7 @@ import urllib.parse
 
 from access_control import page_lock
 
-page_lock ("🔒 Grant Newsfeed")
+page_lock ("Grant Newsfeed")
 
 # Set page config once at the very top
 st.set_page_config(
@@ -83,7 +83,7 @@ st.markdown("""
 # ----------------------------
 # Title & Description
 # ----------------------------
-st.title("🔒 Grant Newsfeed")
+st.title("Grant Newsfeed")
 st.markdown("Catch the latest news, insights, and essential information about government grants for Singapore SMEs.")
 st.markdown("---")
 
