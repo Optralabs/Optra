@@ -8,11 +8,6 @@ from io import BytesIO
 import os
 import json
 
-from access_control import page_lock, show_locked_sidebar
-
-show_locked_sidebar()
-page_lock("Grant Application Toolkit")
-
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def get_logo_base64(path, width=80):
@@ -84,7 +79,7 @@ grants_data = load_grant_data("data/grants_data.json")
 roadmap = {grant: data["roadmap"] for grant, data in grants_data.items()}
 doc_checklist = {grant: data["doc_checklist"] for grant, data in grants_data.items()}
 
-st.title("Application Readiness Hub")
+st.title("🔒 Grant Application Toolkit")
 st.markdown("This tool guides you through preparing for your selected grant application.")
 
 if "plan_generated" not in st.session_state:
