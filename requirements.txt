@@ -12,4 +12,4 @@ reportlab
 streamlit-timeline
 feedparser
 supabase
-pinecone-client
+pinecone
