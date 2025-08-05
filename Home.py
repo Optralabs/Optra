@@ -1,7 +1,3 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent))
-
 import streamlit as st
 import openai
 from openai import OpenAI
@@ -15,10 +11,14 @@ from io import BytesIO
 import pdfplumber
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from feedback import get_past_good_answers, show_feedback_ui
+from globals import *
 
-from modules.feedback import get_past_good_answers, show_feedback_ui
-from modules.globals import *
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))
 
+from globals import *
 
 def generate_pdf(content: str) -> bytes:
     pdf = FPDF()
@@ -618,7 +618,7 @@ https://www.gobusiness.gov.sg or https://www.enterprisesg.gov.sg
 """)
 
 # =========================
-# Save all key interactions to Pinecone
+# 📌 Save all key interactions to Pinecone
 # =========================
 
 # 1. Save Eligibility Results
