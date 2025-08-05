@@ -9,6 +9,10 @@ import plotly.figure_factory as ff
 import pandas as pd
 import os
 
+from access_control import page_lock
+
+page_lock ("Grant Email Composer")
+
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def get_logo_base64(path, width=80):
@@ -70,7 +74,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ========= App State Setup =========
-st.title("🔒 Grant Email Composer")
+st.title("Grant Email Composer")
 st.markdown("Instantly enhance your emailing capabilities to the Grant-relevant organizations you contact.")
 
 selected_grant = st.selectbox(
