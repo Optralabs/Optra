@@ -13,7 +13,7 @@ import base64
 from access_control import page_lock, show_locked_sidebar
 
 show_locked_sidebar()
-page_lock("Grant Application Toolkit")  # Replace with your actual page name
+page_lock("Grant Application Reviewer") 
 
 # === App Config ===
 st.set_page_config(
