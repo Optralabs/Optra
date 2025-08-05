@@ -593,12 +593,10 @@ if st.button("Submit"):
                         }
                     ]
                 )
-                st.markdown("### 💬 Answer")
+                st.markdown("###Answer")
                 st.markdown(res.choices[0].message.content)
             except Exception as e:
                 st.error(f"API error: {e}")
-else:
-    st.info("Type your question above and click 'Submit FAQ' to get a response.")
 
 st.markdown("---")
 
