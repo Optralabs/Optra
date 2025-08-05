@@ -155,7 +155,7 @@ Use the sidebar to:
 ---
 """)
 
-st.info("Start by selecting a tool from the sidebar on the left.")
+st.info("Start by determining your grant eligibility below.")
 
 
 auto_data = {}
