@@ -12,7 +12,7 @@ import os
 from access_control import page_lock, show_locked_sidebar
 
 show_locked_sidebar()
-page_lock("Grant Application Toolkit")  # Replace with your actual page name
+page_lock("Grant Email Composer")  # Replace with your actual page name
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
