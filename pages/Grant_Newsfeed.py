@@ -7,7 +7,7 @@ import base64
 from datetime import datetime
 import urllib.parse
 
-from access_control import page_lock
+from access_control import page_lock, show_locked_sidebar
 
 show_locked_sidebar()
 page_lock("Grant Newsfeed")  # Replace with your actual page name
