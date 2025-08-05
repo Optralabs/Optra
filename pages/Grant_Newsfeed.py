@@ -7,6 +7,11 @@ import base64
 from datetime import datetime
 import urllib.parse
 
+from access_control import page_lock, show_locked_sidebar
+
+show_locked_sidebar()
+page_lock("Grant Application Toolkit")  # Replace with your actual page name
+
 # Set page config once at the very top
 st.set_page_config(
     page_title="Smart Grant Advisor",
