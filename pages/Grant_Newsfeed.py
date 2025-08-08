@@ -1,4 +1,49 @@
 import streamlit as st
+from globals import get_user_plan, show_locked_page
+from auth import verify_token
+
+# 1) Page config early (avoid duplicate set_page_config later in the file)
+st.set_page_config(page_title="OPTRA", layout="wide", page_icon="optra_logo_transparent.png")
+
+# 2) Resolve the user’s email
+# Prefer session (set by Home.py), then token
+decoded = verify_token()  # should read st.query_params["token"] if present
+email_from_token = (decoded or {}).get("email")
+email = st.session_state.get("user_email") or email_from_token
+
+# 3) Resolve plan
+plan = get_user_plan(email) if email else None
+
+# 4) Access rules
+# Allow Starter + Pro:
+if plan not in ("Starter Plan", "Pro Plan"):
+    # Consistent locked styling + stop
+    show_locked_page("🔒 This page is locked. Please unlock access on the Home page.")
+
+# If you want this page to require Pro only, use this instead:
+# if plan != "Pro Plan":
+#     show_locked_page("🔒 Pro plan required. Upgrade to access this page.")
+
+# 5) Keep session in sync
+st.session_state["user_email"] = email
+st.session_state["user_plan"]  = plan
+st.session_state["unlocked"]   = True
+
+# (Optional) Same gradient for unlocked pages too:
+st.markdown("""
+<style>
+  html, body, [data-testid="stAppViewContainer"] {
+      background: linear-gradient(to bottom, #0a0a0a 0%, #0a0a0a 10%, #0d0f1c 30%, #0f111f 60%, #00011d 100%) !important;
+      color: #ffffff !important;
+  }
+  section[data-testid="stSidebar"] { background-color: #000 !important; }
+  section[data-testid="stSidebar"] * { color: #fff !important; }
+</style>
+""", unsafe_allow_html=True)
+
+
+
+import streamlit as st
 import feedparser
 import re
 from PIL import Image
