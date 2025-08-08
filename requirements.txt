@@ -13,3 +13,4 @@ streamlit-timeline
 feedparser
 supabase
 pinecone
+python-jose
